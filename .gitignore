@@ -1,0 +1,8 @@
+# build folder
+build/
+
+# build files
+*.o
+
+# macOS
+.DS_Store
