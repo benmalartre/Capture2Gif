@@ -135,6 +135,30 @@ Structure Capture2Gif
   *writer
 EndStructure
 
+Procedure DebugFormat(format.i)
+  If format & #PB_PixelFormat_8Bits 
+    Debug "8 bits (1 octet par pixel, palettisé)"
+  ElseIf format & #PB_PixelFormat_15Bits
+    Debug "15 bits (2 octets par pixel)"
+  ElseIf format & #PB_PixelFormat_16Bits
+    Debug "16 bits (2 octets par pixel)"
+  ElseIf format & #PB_PixelFormat_24Bits_RGB
+    Debug "24 bits (3 octets par pixel (RRGGBB))"
+  ElseIf format & #PB_PixelFormat_24Bits_BGR
+    Debug "24 bits (3 octets par pixel (BBGGRR))"
+  ElseIf format & #PB_PixelFormat_32Bits_RGB  
+    Debug "32 bits (4 octets par pixel (RRGGBB))"
+  ElseIf format & #PB_PixelFormat_32Bits_BGR
+    Debug "32 bits (4 octets par pixel (BBGGRR))"
+  EndIf
+  
+  If format & #PB_PixelFormat_ReversedY 
+    Debug "Les lignes sont inversées en hauteur !"
+  Else
+    Debug "Les lignes ne sont pas inversées en hauteur !"
+  EndIf 
+EndProcedure
+
 ;------------------------------------------------------------------------------------------------
 ; GET CAPTURE RECTANGLE
 ;------------------------------------------------------------------------------------------------
@@ -226,7 +250,7 @@ Procedure Launch()
   Define app.Capture2Gif
   app\delay = 5
   app\outputFilename = "image"
-  app\outputFolder = "E:/Projects/RnD/Capture2Gif"
+  app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif"
   app\writer = #Null
   Define window = OpenWindow(#PB_Any, 200,200,400,200,"ScreenCapture")
   StickyWindow(window, #True)
@@ -271,8 +295,8 @@ Procedure Launch()
   ScreenCapture::Term(app\capture)  
 EndProcedure
 Launch()
-; IDE Options = PureBasic 5.70 LTS (Windows - x64)
-; CursorPosition = 215
-; FirstLine = 189
+; IDE Options = PureBasic 5.73 LTS (Windows - x64)
+; CursorPosition = 159
+; FirstLine = 210
 ; Folding = --
 ; EnableXP
