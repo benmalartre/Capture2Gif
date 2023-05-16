@@ -27,27 +27,33 @@ EndImport
 
 
 Procedure GetNumBytesPerPixels(format.i)
-  If format & #PB_PixelFormat_8Bits 
-    Debug "8 bits (1 octet par pixel, palettisé)"
-  ElseIf format & #PB_PixelFormat_15Bits
-    Debug "15 bits (2 octets par pixel)"
-  ElseIf format & #PB_PixelFormat_16Bits
-    Debug "16 bits (2 octets par pixel)"
-  ElseIf format & #PB_PixelFormat_24Bits_RGB
-    Debug "24 bits (3 octets par pixel (RRGGBB))"
-  ElseIf format & #PB_PixelFormat_24Bits_BGR
-    Debug "24 bits (3 octets par pixel (BBGGRR))"
-  ElseIf format & #PB_PixelFormat_32Bits_RGB  
-    Debug "32 bits (4 octets par pixel (RRGGBB))"
-  ElseIf format & #PB_PixelFormat_32Bits_BGR
-    Debug "32 bits (4 octets par pixel (BBGGRR))"
-  EndIf
   
   If format & #PB_PixelFormat_ReversedY 
     Debug "Les lignes sont inversées en hauteur !"
   Else
     Debug "Les lignes ne sont pas inversées en hauteur !"
   EndIf 
+  
+  If format & #PB_PixelFormat_8Bits 
+    Debug "8 bits (1 octet par pixel, palettisé)"
+    ProcedureReturn 1
+  ElseIf format & #PB_PixelFormat_16Bits
+    Debug "16 bits (2 octets par pixel)"
+    ProcedureReturn 2
+  ElseIf format & #PB_PixelFormat_24Bits_RGB
+    Debug "24 bits (3 octets par pixel (RRGGBB))"
+     ProcedureReturn 3
+  ElseIf format & #PB_PixelFormat_24Bits_BGR
+    Debug "24 bits (3 octets par pixel (BBGGRR))"
+     ProcedureReturn 3
+  ElseIf format & #PB_PixelFormat_32Bits_RGB  
+    Debug "32 bits (4 octets par pixel (RRGGBB))"
+     ProcedureReturn 4
+  ElseIf format & #PB_PixelFormat_32Bits_BGR
+    Debug "32 bits (4 octets par pixel (BBGGRR))"
+     ProcedureReturn 4
+  EndIf
+ 
 EndProcedure
 
 
@@ -60,6 +66,8 @@ Procedure FlipBuffer(img.i, *buffer, width.i, height.i, *m.Mask_t)
   Define *output = *buffer
   Define num_pixels_in_row.i = width
   Define num_rows.i = height
+  Define num_bytes.i = GetNumBytesPerPixels(DrawingBufferPixelFormat())
+  Define offset_bytes.i = num_bytes * 4
     
   Define *mask = *m
   ! mov rsi, [p.p_input]                ; input buffer to rsi register
@@ -67,8 +75,10 @@ Procedure FlipBuffer(img.i, *buffer, width.i, height.i, *m.Mask_t)
   ! mov eax, [p.v_num_pixels_in_row]    ; image width in rax register
   ! mov ecx, [p.v_num_rows]             ; image height in rcx register
   ! mov r10, [p.p_mask]                 ; load mask in r10 register
+  ! mov r8, [p.v_num_bytes]             ; load num bytes in r11 register
+  ! mov r9, [p.v_offset_bytes]         ; load offset bytes in r12 register
   ! mov r15, rax                        ; num pixels in a row
-  ! imul r15, 4                         ; size of a row of pixels
+  ! imul r15, r8                        ; size of a row of pixels
   ! movups xmm1, [r10]                  ; load mask in xmm1 register
   
   ! loop_over_rows:
@@ -83,9 +93,9 @@ Procedure FlipBuffer(img.i, *buffer, width.i, height.i, *m.Mask_t)
   !   movups xmm0, [r14]                ; load pixel to xmm0
   !   pshufb xmm0, xmm1                 ; shuffle bytes with mask
   !   movups [rdi], xmm0                ; set fixed color to output ptr
-  !   add r14, 16                       ; advance input ptr
-  !   add rdi, 16                       ; advance output ptr
-  !   sub r11, 4                        ; decrement pixel counter
+  !   add r14, r9                       ; advance input ptr
+  !   add rdi, r9                       ; advance output ptr
+  !   sub r11, r8                        ; decrement pixel counter
   !   jg loop_over_pixels               ; loop next pixel
   
   ! next_row:
@@ -113,9 +123,9 @@ EndProcedure
 
 
 Define i
-Define folder.s = "D:/Photos/ToGIFs"
-Define name.s = "LaRotonde2012"
-Define delay.i = 1
+Define folder.s = "D:/Photos/ToGIFs/DoYouEarMe"
+Define name.s = "DoYouEarMe"
+Define delay.i = 16
 
 NewList images.s()
 
@@ -151,7 +161,7 @@ FreeMemory(*buffer)
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 62
-; FirstLine = 39
+; CursorPosition = 126
+; FirstLine = 99
 ; Folding = -
 ; EnableXP
