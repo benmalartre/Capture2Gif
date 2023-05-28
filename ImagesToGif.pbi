@@ -123,8 +123,10 @@ EndProcedure
 
 
 Define i
-Define folder.s = "D:/Photos/ToGIFs/DoYouEarMe"
-Define name.s = "DoYouEarMe"
+; Define folder.s = "D:/Photos/ToGIFs/DoYouEarMe"
+; Define name.s = "DoYouEarMe"
+Define folder.s = "D:/Photos/ToGIFs/CousyTower"
+Define name.s = "CousyTower"
 Define delay.i = 16
 
 NewList images.s()
@@ -161,7 +163,7 @@ FreeMemory(*buffer)
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 126
+; CursorPosition = 128
 ; FirstLine = 99
 ; Folding = -
 ; EnableXP
