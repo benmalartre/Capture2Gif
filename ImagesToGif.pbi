@@ -56,7 +56,6 @@ Procedure GetNumBytesPerPixels(format.i)
  
 EndProcedure
 
-
 Procedure FlipBuffer(img.i, *buffer, width.i, height.i, *m.Mask_t)
   Define tmp = CreateImage(#PB_Any, width, height, 32)
   StartDrawing(ImageOutput(tmp))
@@ -163,7 +162,7 @@ FreeMemory(*buffer)
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 128
-; FirstLine = 99
+; CursorPosition = 141
+; FirstLine = 91
 ; Folding = -
 ; EnableXP
