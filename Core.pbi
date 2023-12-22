@@ -11,8 +11,8 @@ DeclareModule Capture
   EndStructure
  
   Structure Capture_t
-    hWnd.i
     rect.Rectangle_t
+    hWnd.i
     img.i
     *buffer
   EndStructure
@@ -23,7 +23,7 @@ DeclareModule Capture
   EndDataSection
   
   Declare Init(*c.Capture_t, *r.Rectangle_t=#Null, hwnd=#NUL)
-  Declare Capture(*c.Capture_t, flipBuffer.b)
+  Declare Capture(*c.Capture_t, flipBuffer.b=#True)
   Declare Term(*c.Capture_t)
 EndDeclareModule
 
@@ -31,30 +31,6 @@ EndDeclareModule
 ; CAPTURE MODULE IMPLEMENTATION
 ;------------------------------------------------------------------------------------------------
 Module Capture
-  
-  Procedure _DebugFormat(format.i)
-    If format & #PB_PixelFormat_8Bits 
-      Debug "8 bits (1 octet par pixel, palettisé)"
-    ElseIf format & #PB_PixelFormat_15Bits
-      Debug "15 bits (2 octets par pixel)"
-    ElseIf format & #PB_PixelFormat_16Bits
-      Debug "16 bits (2 octets par pixel)"
-    ElseIf format & #PB_PixelFormat_24Bits_RGB
-      Debug "24 bits (3 octets par pixel (RRGGBB))"
-    ElseIf format & #PB_PixelFormat_24Bits_BGR
-      Debug "24 bits (3 octets par pixel (BBGGRR))"
-    ElseIf format & #PB_PixelFormat_32Bits_RGB  
-      Debug "32 bits (4 octets par pixel (RRGGBB))"
-    ElseIf format & #PB_PixelFormat_32Bits_BGR
-      Debug "32 bits (4 octets par pixel (BBGGRR))"
-    EndIf
-    
-    If format & #PB_PixelFormat_ReversedY 
-      Debug "Les lignes sont inversées en hauteur !"
-    Else
-      Debug "Les lignes ne sont pas inversées en hauteur !"
-    EndIf 
-  EndProcedure
 
   Procedure _FlipBuffer(*c.Capture_t)
     
@@ -99,15 +75,15 @@ Module Capture
   EndProcedure
   
   Procedure Init(*c.Capture_t, *r.Rectangle_t=#Null, hWnd=#Null)
-    *c\hWnd = hWnd
     If *r
       *c\rect\x = *r\x
       *c\rect\y = *r\y
       *c\rect\w = *r\w
       *c\rect\h = *r\h
-    ElseIf *c\hWnd
+    ElseIf hWnd
       Define rect.RECT
-      If GetWindowRect_(*c\hWnd, rect)
+      *c\hWnd = hWnd
+      If GetWindowRect_(hWnd, rect)
         *c\rect\x = 0
         *c\rect\y = 0
         *c\rect\w = rect\right - rect\left
@@ -127,16 +103,16 @@ Module Capture
     EndIf
   EndProcedure
   
-  Procedure Capture(*c.Capture_t, flipBuffer.b)
+  Procedure Capture(*c.Capture_t, flipBuffer.b=#True)
     Define dstDC = StartDrawing(ImageOutput(*c\img))
-    
-    If Not *c\hWnd : *c\hWnd = GetDesktopWindow_() : EndIf 
-    Define srcDC = GetDC_(*c\hWnd)
+    Define hWnd = *c\hWnd
+    If Not hWnd : hWnd = GetDesktopWindow_() : EndIf 
+    Define srcDC = GetDC_(hWnd)
     
     If dstDC And srcDC
-      BitBlt_(hDC,0,0,*c\rect\w,*c\rect\h,srcDC,*c\rect\x,*c\rect\y,#SRCCOPY)
+      BitBlt_(dstDC,0,0,*c\rect\w,*c\rect\h,srcDC,*c\rect\x,*c\rect\y,#SRCCOPY)
     EndIf
-    ReleaseDC_(*c\hWnd, srcDC)
+    ReleaseDC_(hWnd, srcDC)
 
     StopDrawing()
     
@@ -162,7 +138,7 @@ ImportC "gif.lib"
 EndImport
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 144
-; FirstLine = 103
+; CursorPosition = 86
+; FirstLine = 78
 ; Folding = --
 ; EnableXP

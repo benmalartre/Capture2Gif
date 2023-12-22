@@ -164,7 +164,8 @@ Procedure Launch()
   ButtonGadget(#STOP_BTN, 120, 160, 100, 30, "Stop")
   ListViewGadget(#PROCESS_LIST, 10, 10, 380, 150)
   
-  Define hWnd = 0; GetWindowByName("XSIFloatingView")
+  Define hWnd = GetWindowByName("XSIFloatingView")
+  ;Define hWnd = GetWindowByName("Softimage")
     
   Define close = #False
   Define record = #False
@@ -199,7 +200,7 @@ Procedure Launch()
     
     If record
       SetWindowColor(window, RGB(0,64,255))
-      Capture::Capture(app\capture, #False)
+      Capture::Capture(app\capture, #True)
       AnimatedGif_AddFrame(app\writer, app\capture\buffer)
       app\frame + 1
       Delay(app\delay)
@@ -212,7 +213,7 @@ Procedure Launch()
 EndProcedure
 Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 166
-; FirstLine = 147
+; CursorPosition = 167
+; FirstLine = 129
 ; Folding = --
 ; EnableXP
