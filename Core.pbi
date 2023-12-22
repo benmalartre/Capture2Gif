@@ -65,7 +65,7 @@ Module Capture
     !   add r14, 16                       ; advance input ptr
     !   add rdi, 16                       ; advance output ptr
     !   sub r11, 4                        ; decrement pixel counter
-    !   jg loop_over_row_pixels               ; loop next pixel
+    !   jg loop_over_row_pixels           ; loop next pixel
     
     ! next_row:
     !   dec rcx                           ; decrement row counter
@@ -92,9 +92,9 @@ Module Capture
     !   movups xmm0, [rsi]                ; load pixel to xmm0
     !   pshufb xmm0, xmm1                 ; shuffle bytes with mask
     !   movups [rdi], xmm0                ; set fixed color to output ptr
-    !   add rsi, 16                        ; advance input ptr
-    !   add rdi, 16                        ; advance output ptr
-    !   sub r11, 4                          ; decrement pixel counter
+    !   add rsi, 16                       ; advance input ptr
+    !   add rdi, 16                       ; advance output ptr
+    !   sub r11, 4                        ; decrement pixel counter
     !   jg loop_over_pixels               ; loop next pixel
     
     StopDrawing()
@@ -162,7 +162,7 @@ ImportC "gif.lib"
 EndImport
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 99
-; FirstLine = 47
+; CursorPosition = 96
+; FirstLine = 18
 ; Folding = --
 ; EnableXP
