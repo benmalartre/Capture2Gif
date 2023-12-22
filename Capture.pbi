@@ -159,6 +159,8 @@ Enumeration
 EndEnumeration
 
 
+
+
 Procedure Launch()
   Define app.Capture2Gif
   app\delay = 5
@@ -166,7 +168,7 @@ Procedure Launch()
   app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif"
   app\writer = #Null
   Define width = 400
-  Define height = 400
+  Define height = 200
   Define window = OpenWindow(#PB_Any, 
                              200, 
                              200,
@@ -176,25 +178,27 @@ Procedure Launch()
                              #PB_Window_SystemMenu|
                              #PB_Window_SizeGadget)
   
-  Define width
   Define root = Widget::CreateRoot(window)
-  Define text = Widget::CreateText(root, "   enter the dragon!",0,0, width, 32)
-  Define string = Widget::CreateString(root, 0,32, width, 120)
-  Define canvas = Widget::CreateContainer(root, 0, height / 2,width, height / 2, #True)
-  Define play = Widget::CreateButton(canvas, "zob", 10, 10, width-20, 32)
-  Define stop = Widget::CreateButton(canvas, "zob", 10, 50, width-20, 32)
-  
-  Define play = Widget::CreateIcon(canvas, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
-  Define stop = Widget::CreateIcon(canvas, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
-  
-  Define check = Widget::CreateCheck(canvas, "zob", #True, 120, 10, 32, 32)
-  Widget::Draw(root)
-  StickyWindow(window, #True)
 
-;   ListViewGadget(#PROCESS_LIST, 10, 10, 380, 150)
+  Define c1 = Widget::CreateContainer(root, 0, height / 2,width, height / 2, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
+  Define play = Widget::CreateButton(c1, "zob", 10, 10, width-20, 32)
+  Define stop = Widget::CreateButton(c1, "zob", 10, 50, width-20, 32)
+  
+  Define c2 = Widget::CreateContainer(root, 0, height / 2,width, height / 2, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+  Define play = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
+  Define stop = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
+  
+  Define check = Widget::CreateCheck(c2, "zob", #True, 120, 10, 32, 32)
+  Widget::Resize(root, 0, 0, WindowWidth(window, #PB_Window_InnerCoordinate), WindowHeight(window, #PB_Window_InnerCoordinate))
+  Widget::Draw(root)
+  
+  StickyWindow(window, #True)
+  
+  NewMap widgets.i()
+  widgets(Str(Widget::GetCanvasId(c1))) = c1
+  Widgets(Str(Widget::GetCanvasId(c2))) = c2
   
   Define hWnd = GetWindowByName("XSIFloatingView")
-  ;Define hWnd = GetWindowByName("Softimage")
     
   Define close = #False
   Define record = #False
@@ -206,6 +210,11 @@ Procedure Launch()
 
     If event = #PB_Event_Gadget 
       Define gadget = EventGadget()
+
+      If FindMapElement(widgets(), Str(gadget))
+        Widget::OnEvent(widgets())
+      EndIf
+      
       If gadget = #RECORD_BTN
         StickyWindow(window, #False)
         If Not hWnd
@@ -250,7 +259,7 @@ Procedure Launch()
 EndProcedure
 Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 187
-; FirstLine = 176
+; CursorPosition = 243
+; FirstLine = 208
 ; Folding = --
 ; EnableXP
