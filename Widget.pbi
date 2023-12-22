@@ -205,42 +205,41 @@ Module Widget
     *widget\height = h
     If *widget\type = #WIDGET_TYPE_CONTAINER
       Define *container.Container_t = *widget
+      Define numItems = ListSize(*container\items())
       ResizeGadget(*container\gadget, x, y, w, h)
 
       Select *container\layout
         Case #WIDGET_LAYOUT_VERTICAL
-          Define nh = h / ListSize(*container\items())
-          Define cy = #WIDGET_PADDING_Y
+          Define nh = h / numItems
+          Define cy = 0
           ForEach *container\items()
             If *container\items()\type >= #WIDGET_TYPE_CONTAINER
               Resize(*container\items(),x, cy, w, nh)
-              cy + h / ListSize(*container\items())
             Else
               Resize(*container\items(),
                      x+#WIDGET_PADDING_X, 
                      cy + #WIDGET_PADDING_Y, 
                      w-2*#WIDGET_PADDING_X, 
-                     nh)
-              cy + *container\items()\height + #WIDGET_PADDING_Y
+                     nh-#WIDGET_PADDING_Y)
             EndIf
+            cy + nh
           Next
           
         Case #WIDGET_LAYOUT_HORIZONTAL
-          Define nw = w / ListSize(*container\items())
+          Define nw = (w + numItems * #WIDGET_PADDING_Y)  / numItems
           Define cx = #WIDGET_PADDING_X
           Define cy = #WIDGET_PADDING_Y
           ForEach *container\items()
             If *container\items()\type >= #WIDGET_TYPE_CONTAINER
               Resize(*container\items(),cx, y, nw, h)
-              cx + w / ListSize(*container\items())
             Else
               Resize(*container\items(),
                      cx + #WIDGET_PADDING_X, 
                      #WIDGET_PADDING_Y, 
                      nw,
                      h-2*#WIDGET_PADDING_Y)
-              cx + *container\items()\width + #WIDGET_PADDING_x
             EndIf
+            cx + nw
           Next
       EndSelect
       
@@ -303,6 +302,9 @@ Module Widget
       Select *widget\type
         Case #WIDGET_TYPE_ICON
           Define *icon.Icon_t = *widget
+          _RoundBoxPath(*widget\x, *widget\y, *widget\width, *widget\height,8)
+          VectorSourceColor(RGBA(55, 55, 55, 122))
+          StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd)
           MovePathCursor(*widget\x, *widget\y)
           AddPathSegments(*icon\icon, #PB_Path_Relative )
           VectorSourceColor(RGBA(55, 55, 55, 22))
@@ -327,7 +329,8 @@ Module Widget
           StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
           VectorSourceColor(RGBA(55,55,55, 255))
           FillPath()
-          MovePathCursor((*widget\width - VectorTextWidth(*button\text))/2, *widget\y)
+          MovePathCursor(*widget\x +(*widget\width - VectorTextWidth(*button\text))/2, 
+                         *widget\y + *widget\height/2)
           
           If *button\state = #WIDGET_STATE_HOVER
             VectorSourceColor(RGBA(120, 120, 120, 255))
@@ -419,7 +422,7 @@ EndModule
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 401
-; FirstLine = 166
-; Folding = DABY-
+; CursorPosition = 83
+; FirstLine = 67
+; Folding = DAVA-
 ; EnableXP

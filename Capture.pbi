@@ -1,4 +1,5 @@
 ﻿
+XIncludeFile "Win.pbi"
 XIncludeFile "Core.pbi"
 XIncludeFile "Widget.pbi"
 ;-----------------------------------------------------------------------------------------------
@@ -16,16 +17,26 @@ DeclareModule Scr33nCord3r
     #PROCESS_LIST
   EndEnumeration
   
-  Structure Capture2Gif
+  Structure App_t
+    window.i
     capture.Capture::Capture_t
     outputFolder.s
     outputFilename.s
     frame.i
     delay.i
+    record.b
     *writer
+    hWnd.i
   EndStructure
 
   Declare GetRectangle(*rect.Rectangle_t, hwnd=#Null)
+  Declare SelectWindow(*app.App_t)
+  Declare SelectRectangle(*app.App_t)
+  
+  Declare OnPlay(*widget.Widget::Widget_t)
+  Declare OnStop(*widget.Widget::Widget_t)
+  Declare OnZob(*widget.Widget::Widget_t)
+  Declare Launch()
 EndDeclareModule
 
 
@@ -117,89 +128,39 @@ Module Scr33nCord3r
   
     CloseScreen()
   EndProcedure
-EndModule
-
-
-Structure Window_t
-  hWnd.i
-  Map childrens.i()
-EndStructure
   
-; helper function to enumerate open windows
-;
-Procedure _EnumerateWindows(*window.Window_t)
-  Define title.s {256}
-  Define hWnd    .i
-  
-  hWnd = GetWindow_(GetDesktopWindow_(), #GW_CHILD)
-  While hWnd
-    GetWindowText_(hWnd, @title, 256)
-    AddMapElement(*window\childrens(), title)
-    *window\childrens() = hWnd
-    hWnd = GetWindow_(hWnd, #GW_HWNDNEXT)
-  Wend
-EndProcedure
+  Procedure SelectRectangle(*app.App_t)
+    Debug "Select rectangle..."
+    Define rect.Capture::Rectangle_t
 
-; try get a window by it's name
-;
-Procedure GetWindowByName(name.s="Softimage")
-  Define window.Window_t
-  _EnumerateWindows(window)
-  ForEach window\childrens()
-    If FindString(MapKey(window\childrens()), name)
-      Debug "found xsi view"
-      ProcedureReturn window\childrens()
+    StickyWindow(*app\window, #False)
+    If Not *app\hWnd
+      Scr33nCord3r::GetRectangle(rect)
+      Capture::Init(*app\capture, rect, #Null)
+    Else 
+      Capture::Init(*app\capture, #Null, *app\hWnd)
     EndIf
-  Next 
-EndProcedure
-
-Procedure.l _EnumChildWindowsProc(hWnd.l, param.l) 
-  Protected *window.Window_t = param
-  Protected title.s = Space(256)
-  GetWindowText_(hWnd, @title, 200)
-  AddMapElement(*window\childrens(), title)
-  *window\childrens() = hWnd
-  ProcedureReturn #True
-EndProcedure 
-
-Procedure EnumerateChildWindows(*window.Window_t, pWnd)
-  EnumChildWindows_(pWnd,@_EnumChildWindowsProc(), *window)
-EndProcedure 
-
-Enumeration
-  #PLAY
-  #RECORD
-  #STOP
-EndEnumeration
-
-Procedure OnPlay(*widget.Widget::Widget_t)
-  Define *container.Widget::Container_t = *widget\parent
-  Widget::SetLayout(*container, 1 - *container\layout)
-  Debug "PLAY : "+Str(*widget) + ": " + Str(*widget\parent)
-EndProcedure
-
-Procedure OnStop(*widget.Widget::Widget_t)
-  Define *container.Widget::Container_t = *widget\parent
-  Widget::SetLayout(*container, 1 - *container\layout)
-  Debug "STOP : "+Str(*widget) + ": " + Str(*widget\parent)
-EndProcedure
-
-Procedure OnZob(*widget.Widget::Widget_t)
-  Define *container.Widget::Container_t = *widget\parent
-  Widget::SetLayout(*container, 1 - *container\layout)
-  Debug "ZOB : "+Str(*widget) + ": " + Str(*widget\parent)
-EndProcedure
-
-
-Procedure Launch()
-  Define app.Scr33nCord3r::Capture2Gif
-  app\delay = 5
-  app\outputFilename = "image"
-  app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif"
-  app\writer = #Null
-  Define width = 400
-  Define height = 200
-  Define window = OpenWindow(#PB_Any, 
+  
+    *app\writer = Capture::AnimatedGif_Init( *app\outputFolder+"/"+*app\outputFilename+".gif", 
+                                            *app\capture\rect\w, *app\capture\rect\h, *app\delay)
+    StickyWindow(*app\window, #True)
+    *app\record = #True
+  EndProcedure
+  
+  Procedure SelectWindow(*app.App_t)
+    
+  EndProcedure
+  
+  Procedure Launch()
+    Define app.App_t
+    app\delay = 5
+    app\record = #False
+    app\outputFilename = "image"
+    app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif"
+    app\writer = #Null
+    Define width = 400
+    Define height = 200
+    app\window = OpenWindow( #PB_Any, 
                              200, 
                              200,
                              width,
@@ -207,97 +168,109 @@ Procedure Launch()
                              "Scr33nC0rd3r", 
                              #PB_Window_SystemMenu|
                              #PB_Window_SizeGadget)
-  
-  Define root = Widget::CreateRoot(window)
-
-  Define c1 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
-  Define btn1 = Widget::CreateButton(c1, "zob", 10, 10, width-20, 32)
-  Define btn2 = Widget::CreateButton(c1, "zob", 10, 50, width-20, 32)
-  
-  Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-  Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
-  Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
-  
-  Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
-  Define lst  = Widget::CreateString(c3,0,0,100,100)
-  
-  Define check = Widget::CreateCheck(c2, "zob", #True, 120, 10, 32, 32)
-  Widget::Resize(root, 0, 0, width, height)
-  Widget::Draw(root)
-  
-  Widget::SetCallback(btn1, @OnZob(), btn1)
-  Widget::SetCallback(btn2, @OnZob(), btn2)
-  Widget::SetCallback(ico1, @OnPlay(), ico1)
-  Widget::SetCallback(ico2, @OnStop(), ico2)
-
-  StickyWindow(window, #True)
-  
-  NewMap widgets.i()
-  widgets(Str(Widget::GetGadgetId(c1))) = c1
-  Widgets(Str(Widget::GetGadgetId(c2))) = c2
-  
-  Define hWnd = GetWindowByName("XSIFloatingView")
     
-  Define close = #False
-  Define record = #False
-  Define rect.Capture::Rectangle_t
-  Define capture.Capture::Capture_t
+    Define root = Widget::CreateRoot(app\window)
   
-  Repeat
-    Define event = WaitWindowEvent(app\delay)
-
-    If event = #PB_Event_Gadget 
-      Define gadget = EventGadget()
-
-      If FindMapElement(widgets(), Str(gadget))
-        Widget::OnEvent(widgets())
+    Define c1 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
+    Define btn1 = Widget::CreateButton(c1, "Select Region", 10, 10, width-20, 32)
+    Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 50, width-20, 32)
+    
+    Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+;     Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
+;     Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
+    Define btn3 = Widget::CreateButton(c2, "Select Region", 10, 10, width-20, 32)
+    Define btn4 = Widget::CreateButton(c2, "Select Window", 10, 50, width-20, 32)
+    
+    Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
+    Define lst  = Widget::CreateString(c3,0,0,100,100)
+    
+    Define check = Widget::CreateCheck(c3, "zob", #True, 120, 10, 32, 32)
+    Widget::Resize(root, 0, 0, width, height)
+    Widget::Draw(root)
+    
+    Widget::SetCallback(btn1, @SelectRectangle(), app)
+    Widget::SetCallback(btn2, @SelectWindow(), app)
+;     Widget::SetCallback(ico1, @OnPlay(), ico1)
+;     Widget::SetCallback(ico2, @OnStop(), ico2)
+  
+    StickyWindow(app\window, #True)
+    
+    NewMap widgets.i()
+    widgets(Str(Widget::GetGadgetId(c1))) = c1
+    Widgets(Str(Widget::GetGadgetId(c2))) = c2
+    
+    Define hWnd = Win::GetWindowByName("XSIFloatingView")
+      
+    Define close = #False
+    Define record = #False
+    Define rect.Capture::Rectangle_t
+    Define capture.Capture::Capture_t
+    
+    Repeat
+      Define event = WaitWindowEvent(app\delay)
+  
+      If event = #PB_Event_Gadget 
+        Define gadget = EventGadget()
+  
+        If FindMapElement(widgets(), Str(gadget))
+          Widget::OnEvent(widgets())
+        EndIf
+        
+        If gadget = Scr33nCord3r::#RECORD_BTN
+          
+        ElseIf gadget = Scr33nCord3r::#STOP_BTN
+          If record
+            AnimatedGif_Term(app\writer)
+            record = #False
+          EndIf
+          close = #True
+        EndIf
+        
+      ElseIf event = #PB_Event_SizeWindow
+        Widget::Resize(root, 
+                       0, 
+                       0, 
+                       WindowWidth(app\window, #PB_Window_InnerCoordinate), 
+                       WindowHeight(app\window, #PB_Window_InnerCoordinate))
+        Widget::Draw(root)
       EndIf
       
-      If gadget = Scr33nCord3r::#RECORD_BTN
-        StickyWindow(window, #False)
-        If Not hWnd
-          Scr33nCord3r::GetRectangle(rect)
-          Capture::Init(app\capture, rect, #Null)
-        Else 
-          Capture::Init(app\capture, #Null, hWnd)
-        EndIf
-
-        app\writer = AnimatedGif_Init( app\outputFolder+"/"+app\outputFilename+".gif", app\capture\rect\w, app\capture\rect\h, app\delay)
-        StickyWindow(window, #True)
-        record = #True
-      ElseIf gadget = Scr33nCord3r::#STOP_BTN
-        If record
-          AnimatedGif_Term(app\writer)
-          record = #False
-        EndIf
-        close = #True
+      If record
+        SetWindowColor(app\window, RGB(0,64,255))
+        Capture::Capture(app\capture, #True)
+        AnimatedGif_AddFrame(app\writer, app\capture\buffer)
+        app\frame + 1
+        Delay(app\delay)
+      Else
+        SetWindowColor(app\window, RGB(128,128,128))
       EndIf
       
-    ElseIf event = #PB_Event_SizeWindow
-      Widget::Resize(root, 
-                     0, 
-                     0, 
-                     WindowWidth(window, #PB_Window_InnerCoordinate), 
-                     WindowHeight(window, #PB_Window_InnerCoordinate))
-      Widget::Draw(root)
-    EndIf
-    
-    If record
-      SetWindowColor(window, RGB(0,64,255))
-      Capture::Capture(app\capture, #True)
-      AnimatedGif_AddFrame(app\writer, app\capture\buffer)
-      app\frame + 1
-      Delay(app\delay)
-    Else
-      SetWindowColor(window, RGB(128,128,128))
-    EndIf
-    
-  Until close = #True Or event = #PB_Event_CloseWindow
-  Capture::Term(app\capture)  
-EndProcedure
-Launch()
+    Until close = #True Or event = #PB_Event_CloseWindow
+    Capture::Term(app\capture)  
+  EndProcedure
+  
+  Procedure OnPlay(*widget.Widget::Widget_t)
+    Define *container.Widget::Container_t = *widget\parent
+    Widget::SetLayout(*container, 1 - *container\layout)
+    Debug "PLAY : "+Str(*widget) + ": " + Str(*widget\parent)
+  EndProcedure
+  
+  Procedure OnStop(*widget.Widget::Widget_t)
+    Define *container.Widget::Container_t = *widget\parent
+    Widget::SetLayout(*container, 1 - *container\layout)
+    Debug "STOP : "+Str(*widget) + ": " + Str(*widget\parent)
+  EndProcedure
+  
+  Procedure OnZob(*widget.Widget::Widget_t)
+    Define *container.Widget::Container_t = *widget\parent
+    Widget::SetLayout(*container, 1 - *container\layout)
+    Debug "ZOB : "+Str(*widget) + ": " + Str(*widget\parent)
+  EndProcedure
+EndModule
+
+Scr33nCord3r::Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 258
-; FirstLine = 244
+; CursorPosition = 193
+; FirstLine = 148
 ; Folding = --
 ; EnableXP

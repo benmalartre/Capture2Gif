@@ -21,6 +21,15 @@ DeclareModule Capture
     Data.a 2,1,0,3,6,5,4,7,10,9,8,11,14,13,12,15
   EndDataSection
   
+  ;------------------------------------------------------------------------------------------------
+  ; IMPORT C FUNCTIONS
+  ;------------------------------------------------------------------------------------------------
+  ImportC "gif.lib"
+    AnimatedGif_Init(filename.p-utf8, width.l, height.l, delay.i)
+    AnimatedGif_Term(*writer)
+    AnimatedGif_AddFrame(*writer, *cs)
+  EndImport
+  
   Declare Init(*c.Capture_t, *r.Rectangle_t=#Null, hWnd=#NUL)
   Declare Capture(*c.Capture_t, flipBuffer.b=#True)
   Declare Term(*c.Capture_t)
@@ -145,17 +154,7 @@ Module Capture
   EndProcedure 
 EndModule
 
-;------------------------------------------------------------------------------------------------
-; IMPORT C FUNCTIONS
-;------------------------------------------------------------------------------------------------
-ImportC "gif.lib"
-  AnimatedGif_Init(filename.p-utf8, width.l, height.l, delay.i)
-  AnimatedGif_Term(*writer)
-  AnimatedGif_AddFrame(*writer, *cs)
-EndImport
-
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 23
-; FirstLine = 1
+; CursorPosition = 27
 ; Folding = --
 ; EnableXP
