@@ -1,6 +1,6 @@
-﻿;================================================================================================
+﻿;------------------------------------------------------------------------------------------------
 ; WIDGET DECLARATION
-;================================================================================================
+;------------------------------------------------------------------------------------------------
 DeclareModule Widget
   Enumeration
     #WIDGET_STATE_DEFAULT  = 0
@@ -61,11 +61,11 @@ DeclareModule Widget
   EndStructure
   
   Structure Text_t Extends Widget_t
-    text.i
+    gadget.i
   EndStructure
   
   Structure String_t Extends Widget_t
-    string.i
+    gadget.i
   EndStructure
   
   Structure Button_t Extends Widget_t
@@ -97,9 +97,9 @@ DeclareModule Widget
 
 EndDeclareModule
 
-;================================================================================================
+;------------------------------------------------------------------------------------------------
 ; WIDGET IMPLEMENTATION
-;================================================================================================
+;------------------------------------------------------------------------------------------------
 Module Widget
   Procedure _Set(*widget.Widget_t, t.i, parent.i, x.i, y.i, w.i, h.i)
     *widget\type     = t
@@ -203,7 +203,7 @@ Module Widget
     *widget\y = y
     *widget\width = w
     *widget\height = h
-    If *widget\type >= #WIDGET_TYPE_CONTAINER
+    If *widget\type = #WIDGET_TYPE_CONTAINER
       Define *container.Container_t = *widget
       ResizeGadget(*container\gadget, x, y, w, h)
 
@@ -242,9 +242,18 @@ Module Widget
               cx + *container\items()\width + #WIDGET_PADDING_x
             EndIf
           Next
-          
-       EndSelect
-     EndIf
+      EndSelect
+      
+    ElseIf *widget\type = #WIDGET_TYPE_TEXT
+      Define *text.Text_t = *widget
+      ResizeGadget(*text\gadget, x, y, w, h)
+      
+    ElseIf *widget\type = #WIDGET_TYPE_STRING
+      Define *string.String_t = *widget
+      ResizeGadget(*string\gadget, x, y, w, h)
+
+    EndIf
+    
   EndProcedure
   
   Procedure OnEvent(*widget.Container_t)
@@ -382,7 +391,7 @@ Module Widget
   
   Procedure CreateText(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
     Define *widget.Text_t = AllocateStructure(Text_t)
-    *widget\text = TextGadget(#PB_Any, x, y, w, h, text)
+    *widget\gadget = TextGadget(#PB_Any, x, y, w, h, text)
     _Set(*widget, #WIDGET_TYPE_TEXT, *p, x, y, w, h)
     _AddItem(*p, *widget)
     ProcedureReturn *widget
@@ -390,7 +399,7 @@ Module Widget
   
   Procedure CreateString(*p.Container_t, x.i, y.i, w.i, h.i)
     Define *widget.String_t = AllocateStructure(String_t)
-    *widget\string = StringGadget(#PB_Any, x, y, w, h, "")
+    *widget\gadget = StringGadget(#PB_Any, x, y, w, h, "")
     _Set(*widget, #WIDGET_TYPE_STRING, *p, x, y, w, h)
     _AddItem(*p, *widget)
     ProcedureReturn *widget
@@ -410,7 +419,7 @@ EndModule
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 279
-; FirstLine = 206
-; Folding = D0xN-
+; CursorPosition = 401
+; FirstLine = 166
+; Folding = DABY-
 ; EnableXP

@@ -1,116 +1,130 @@
-﻿XIncludeFile "Core.pbi"
+﻿
+XIncludeFile "Core.pbi"
 XIncludeFile "Widget.pbi"
-;------------------------------------------------------------------------------------------------
-; CAPTURE APP 
-;------------------------------------------------------------------------------------------------
-#RECTANGLE_THICKNESS = 2
+;-----------------------------------------------------------------------------------------------
+;         Scr33nCord3r
+;
+;     Windows Only Windows/Desktop Record To Gif
+;-----------------------------------------------------------------------------------------------
+DeclareModule Scr33nCord3r
+  UseModule Capture
+  #RECTANGLE_THICKNESS = 2
+  
+  Enumeration
+    #RECORD_BTN
+    #STOP_BTN
+    #PROCESS_LIST
+  EndEnumeration
+  
+  Structure Capture2Gif
+    capture.Capture::Capture_t
+    outputFolder.s
+    outputFilename.s
+    frame.i
+    delay.i
+    *writer
+  EndStructure
 
-Enumeration
-  #RECORD_BTN
-  #STOP_BTN
-  #PROCESS_LIST
-EndEnumeration
+  Declare GetRectangle(*rect.Rectangle_t, hwnd=#Null)
+EndDeclareModule
 
-Structure Capture2Gif
-  capture.Capture::Capture_t
-  outputFolder.s
-  outputFilename.s
-  frame.i
-  delay.i
-  *writer
-EndStructure
+
+;-----------------------------------------------------------------------------------------------
+; Scr33nCord3r Implementation
+;-----------------------------------------------------------------------------------------------
+Module Scr33nCord3r
+  UseModule Capture
+  Procedure GetRectangle(*rect.Rectangle_t, hwnd=#Null)
+    If InitMouse() = 0 Or InitSprite() = 0 Or InitKeyboard() = 0
+      MessageRequester("Error", "Can't open DirectX", 0)
+      End
+    EndIf
+    
+    ExamineDesktops()
+    Define width = DesktopWidth(0)
+    Define height = DesktopHeight(0)
+    Define rect.Rectangle_t 
+    rect\y = 0
+    rect\x = 0
+    rect\w = width
+    rect\h = height
+    
+    Define background.Capture_t
+    Init(background, rect, hwnd)
+    Capture(background, #False)
+    
+    Define screen = OpenScreen(width, height, 32, "Capture") 
+    If Not screen
+      MessageRequester("Error", "Impossible to open a "+Str(width)+"*"+Str(height)+" 32-bit screen",0)
+      End
+    EndIf
+  
+    Define sprite = CreateSprite(#PB_Any,width,height)
+    StartDrawing(SpriteOutput(sprite))
+    DrawingMode(#PB_2DDrawing_AllChannels)
+    DrawImage(ImageID(background\img), 0,0, width, height)
+    StopDrawing()
+    Capture::Term(background)
+    
+    Define startX.i, startY.i, endX.i, endY.i
+    startX = DesktopMouseX()
+    startY = DesktopMouseY()
+    MouseLocate(startX, startY)
+    Define drag = #False
+    Define drop = #False
+    Define color = RGB(255,128,0)
+    
+    Repeat
+      FlipBuffers()                        ; Flip for DoubleBuffering
+      ClearScreen(RGB(0,0,0))              ; CleanScreen, black
+    
+      ExamineKeyboard()
+      ExamineMouse()                      
+      
+      If drag : endX = MouseX() : endY = MouseY() 
+      Else : startX = MouseX() : startY = MouseY() : EndIf
+    
+      DisplaySprite(sprite, 0,0)
+      StartDrawing(ScreenOutput())
+      If drag
+        Box(startX, startY - #RECTANGLE_THICKNESS * 0.5, endX - startX, #RECTANGLE_THICKNESS, color)
+        Box(startX, endY - #RECTANGLE_THICKNESS * 0.5, endX - startX, #RECTANGLE_THICKNESS, color)
+        Box(startX - #RECTANGLE_THICKNESS * 0.5, startY, #RECTANGLE_THICKNESS, endY - startY, color)
+        Box(endX - #RECTANGLE_THICKNESS * 0.5, startY, #RECTANGLE_THICKNESS, endY - startY, color)
+      Else
+        Box(startX - 12, startY -#RECTANGLE_THICKNESS * 0.5, 24, #RECTANGLE_THICKNESS, color)
+        Box(startX - #RECTANGLE_THICKNESS * 0.5, startY - 12, #RECTANGLE_THICKNESS, 24, color)
+      EndIf
+      StopDrawing()
+      
+      If MouseButton(#PB_MouseButton_Left) 
+        drag = #True
+      ElseIf drag
+        drop = #True
+      EndIf
+    
+    Until drop = #True
+    
+    If endX < startX : Swap startX, endX : EndIf
+    If endY < startY : Swap startY, endY : EndIf
+    
+    *rect\x = startX
+    *rect\y = startY
+    *rect\w = endX - startX
+    *rect\h = endY - startY
+    If *rect\w % 4 : *rect\w + ( 4 - *rect\w  % 4 ) : EndIf
+    If *rect\h % 4 : *rect\h + ( 4 - *rect\h  % 4 ) : EndIf
+  
+    CloseScreen()
+  EndProcedure
+EndModule
+
 
 Structure Window_t
   hWnd.i
   Map childrens.i()
 EndStructure
-
-; Get capture rectangle
-;
-Procedure GetRectangle(*rect.Capture::Rectangle_t, hwnd=#Null)
-  If InitMouse() = 0 Or InitSprite() = 0 Or InitKeyboard() = 0
-    MessageRequester("Error", "Can't open DirectX", 0)
-    End
-  EndIf
   
-  ExamineDesktops()
-  Define width = DesktopWidth(0)
-  Define height = DesktopHeight(0)
-  Define rect.Capture::Rectangle_t 
-  rect\y = 0
-  rect\x = 0
-  rect\w = width
-  rect\h = height
-  
-  Define background.Capture::Capture_t
-  Capture::Init(background, rect, hwnd)
-  Capture::Capture(background, #False)
-  
-  Define screen = OpenScreen(width, height, 32, "Capture") 
-  If Not screen
-    MessageRequester("Error", "Impossible to open a "+Str(width)+"*"+Str(height)+" 32-bit screen",0)
-    End
-  EndIf
-
-  Define sprite = CreateSprite(#PB_Any,width,height)
-  StartDrawing(SpriteOutput(sprite))
-  DrawingMode(#PB_2DDrawing_AllChannels)
-  DrawImage(ImageID(background\img), 0,0, width, height)
-  StopDrawing()
-  Capture::Term(background)
-  
-  Define startX.i, startY.i, endX.i, endY.i
-  startX = DesktopMouseX()
-  startY = DesktopMouseY()
-  MouseLocate(startX, startY)
-  Define drag = #False
-  Define drop = #False
-  Define color = RGB(255,128,0)
-  
-  Repeat
-    FlipBuffers()                        ; Flip for DoubleBuffering
-    ClearScreen(RGB(0,0,0))              ; CleanScreen, black
-  
-    ExamineKeyboard()
-    ExamineMouse()                      
-    
-    If drag : endX = MouseX() : endY = MouseY() 
-    Else : startX = MouseX() : startY = MouseY() : EndIf
-  
-    DisplaySprite(sprite, 0,0)
-    StartDrawing(ScreenOutput())
-    If drag
-      Box(startX, startY - #RECTANGLE_THICKNESS * 0.5, endX - startX, #RECTANGLE_THICKNESS, color)
-      Box(startX, endY - #RECTANGLE_THICKNESS * 0.5, endX - startX, #RECTANGLE_THICKNESS, color)
-      Box(startX - #RECTANGLE_THICKNESS * 0.5, startY, #RECTANGLE_THICKNESS, endY - startY, color)
-      Box(endX - #RECTANGLE_THICKNESS * 0.5, startY, #RECTANGLE_THICKNESS, endY - startY, color)
-    Else
-      Box(startX - 12, startY -#RECTANGLE_THICKNESS * 0.5, 24, #RECTANGLE_THICKNESS, color)
-      Box(startX - #RECTANGLE_THICKNESS * 0.5, startY - 12, #RECTANGLE_THICKNESS, 24, color)
-    EndIf
-    StopDrawing()
-    
-    If MouseButton(#PB_MouseButton_Left) 
-      drag = #True
-    ElseIf drag
-      drop = #True
-    EndIf
-  
-  Until drop = #True
-  
-  If endX < startX : Swap startX, endX : EndIf
-  If endY < startY : Swap startY, endY : EndIf
-  
-  *rect\x = startX
-  *rect\y = startY
-  *rect\w = endX - startX
-  *rect\h = endY - startY
-  If *rect\w % 4 : *rect\w + ( 4 - *rect\w  % 4 ) : EndIf
-  If *rect\h % 4 : *rect\h + ( 4 - *rect\h  % 4 ) : EndIf
-
-  CloseScreen()
-EndProcedure
-
 ; helper function to enumerate open windows
 ;
 Procedure _EnumerateWindows(*window.Window_t)
@@ -178,7 +192,7 @@ EndProcedure
 
 
 Procedure Launch()
-  Define app.Capture2Gif
+  Define app.Scr33nCord3r::Capture2Gif
   app\delay = 5
   app\outputFilename = "image"
   app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif"
@@ -196,15 +210,15 @@ Procedure Launch()
   
   Define root = Widget::CreateRoot(window)
 
-  Define c1 = Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
+  Define c1 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
   Define btn1 = Widget::CreateButton(c1, "zob", 10, 10, width-20, 32)
   Define btn2 = Widget::CreateButton(c1, "zob", 10, 50, width-20, 32)
   
-  Define c2 = Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+  Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
   Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
   Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
   
-  Define c3 = Widget::CreateContainer(root, 0, 100,width, 50, #False)
+  Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
   Define lst  = Widget::CreateString(c3,0,0,100,100)
   
   Define check = Widget::CreateCheck(c2, "zob", #True, 120, 10, 32, 32)
@@ -239,10 +253,10 @@ Procedure Launch()
         Widget::OnEvent(widgets())
       EndIf
       
-      If gadget = #RECORD_BTN
+      If gadget = Scr33nCord3r::#RECORD_BTN
         StickyWindow(window, #False)
         If Not hWnd
-          GetRectangle(rect)
+          Scr33nCord3r::GetRectangle(rect)
           Capture::Init(app\capture, rect, #Null)
         Else 
           Capture::Init(app\capture, #Null, hWnd)
@@ -251,7 +265,7 @@ Procedure Launch()
         app\writer = AnimatedGif_Init( app\outputFolder+"/"+app\outputFilename+".gif", app\capture\rect\w, app\capture\rect\h, app\delay)
         StickyWindow(window, #True)
         record = #True
-      ElseIf gadget = #STOP_BTN
+      ElseIf gadget = Scr33nCord3r::#STOP_BTN
         If record
           AnimatedGif_Term(app\writer)
           record = #False
@@ -283,7 +297,7 @@ Procedure Launch()
 EndProcedure
 Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 222
-; FirstLine = 217
+; CursorPosition = 258
+; FirstLine = 244
 ; Folding = --
 ; EnableXP

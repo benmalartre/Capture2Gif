@@ -56,53 +56,6 @@ Procedure GetNumBytesPerPixels(format.i)
  
 EndProcedure
 
-Procedure FlipBuffer(img.i, *buffer, width.i, height.i, *m.Mask_t)
-  Define tmp = CreateImage(#PB_Any, width, height, 32)
-  StartDrawing(ImageOutput(tmp))
-  DrawImage(ImageID(img), 0, 0)
-  
-  Define *input = DrawingBuffer()
-  Define *output = *buffer
-  Define num_pixels_in_row.i = width
-  Define num_rows.i = height
-  Define num_bytes.i = GetNumBytesPerPixels(DrawingBufferPixelFormat())
-  Define offset_bytes.i = num_bytes * 4
-    
-  Define *mask = *m
-  ! mov rsi, [p.p_input]                ; input buffer to rsi register
-  ! mov rdi, [p.p_output]               ; output buffer to rdi register
-  ! mov eax, [p.v_num_pixels_in_row]    ; image width in rax register
-  ! mov ecx, [p.v_num_rows]             ; image height in rcx register
-  ! mov r10, [p.p_mask]                 ; load mask in r10 register
-  ! mov r8, [p.v_num_bytes]             ; load num bytes in r11 register
-  ! mov r9, [p.v_offset_bytes]         ; load offset bytes in r12 register
-  ! mov r15, rax                        ; num pixels in a row
-  ! imul r15, r8                        ; size of a row of pixels
-  ! movups xmm1, [r10]                  ; load mask in xmm1 register
-  
-  ! loop_over_rows:
-  !   mov r11, rax                      ; reset pixels counter
-  !   mov r13, rcx                      ; as we reverse iterate
-  !   sub r13, 1                        ; we need the previous row
-  !   imul r13, r15                     ; address of current pixel
-  !   mov r14, rsi                      ; load input buffer in r14 register
-  !   add r14, r13                      ; offset to current pixel
-  
-  ! loop_over_pixels:
-  !   movups xmm0, [r14]                ; load pixel to xmm0
-  !   pshufb xmm0, xmm1                 ; shuffle bytes with mask
-  !   movups [rdi], xmm0                ; set fixed color to output ptr
-  !   add r14, r9                       ; advance input ptr
-  !   add rdi, r9                       ; advance output ptr
-  !   sub r11, r8                        ; decrement pixel counter
-  !   jg loop_over_pixels               ; loop next pixel
-  
-  ! next_row:
-  !   dec rcx                           ; decrement row counter
-  !   jg loop_over_rows                 ; loop next row
-  StopDrawing()
-EndProcedure
-
 Procedure GetImages(path.s, List images.s())
   Define folder.i = ExamineDirectory(#PB_Any, path, "*")
 
@@ -150,6 +103,9 @@ Define writer = AnimatedGif_Init( folder+"/"+name+".gif", width, height, delay)
 ForEach images()
   Debug images()
   Define img = LoadImage(#PB_Any, images())
+  Define tmp = CreateImage(#PB_Any, width, height, 32)
+  StartDrawing(ImageOutput(tmp))
+  DrawImage(ImageID(img), 0, 0)
   FlipBuffer(img, *buffer, width, height, ?swap_red_blue_mask)
   AnimatedGif_AddFrame(writer, *buffer)
   FreeImage(img)
@@ -162,7 +118,7 @@ FreeMemory(*buffer)
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 141
-; FirstLine = 91
+; CursorPosition = 56
+; FirstLine = 29
 ; Folding = -
 ; EnableXP

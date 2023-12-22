@@ -2,7 +2,6 @@
 ; CAPTURE MODULE DECLARATION (WINDOWS ONLY)
 ;------------------------------------------------------------------------------------------------
 DeclareModule Capture
-  #RECTANGLE_THICKNESS = 2
   Structure Rectangle_t
     x.i
     y.i
@@ -22,7 +21,7 @@ DeclareModule Capture
     Data.a 2,1,0,3,6,5,4,7,10,9,8,11,14,13,12,15
   EndDataSection
   
-  Declare Init(*c.Capture_t, *r.Rectangle_t=#Null, hwnd=#NUL)
+  Declare Init(*c.Capture_t, *r.Rectangle_t=#Null, hWnd=#NUL)
   Declare Capture(*c.Capture_t, flipBuffer.b=#True)
   Declare Term(*c.Capture_t)
 EndDeclareModule
@@ -156,7 +155,7 @@ ImportC "gif.lib"
 EndImport
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 122
-; FirstLine = 102
+; CursorPosition = 23
+; FirstLine = 1
 ; Folding = --
 ; EnableXP
