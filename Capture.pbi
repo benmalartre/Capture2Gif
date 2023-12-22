@@ -200,7 +200,7 @@ Procedure Launch()
     
     If record
       SetWindowColor(window, RGB(0,64,255))
-      Capture::Capture(app\capture, #True)
+      Capture::Capture(app\capture, #False)
       AnimatedGif_AddFrame(app\writer, app\capture\buffer)
       app\frame + 1
       Delay(app\delay)
@@ -213,7 +213,7 @@ Procedure Launch()
 EndProcedure
 Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 167
-; FirstLine = 129
+; CursorPosition = 202
+; FirstLine = 165
 ; Folding = --
 ; EnableXP
