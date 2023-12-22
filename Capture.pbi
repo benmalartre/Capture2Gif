@@ -1,5 +1,5 @@
 ﻿XIncludeFile "Core.pbi"
-
+XIncludeFile "Widget.pbi"
 ;------------------------------------------------------------------------------------------------
 ; CAPTURE APP 
 ;------------------------------------------------------------------------------------------------
@@ -152,17 +152,46 @@ Procedure EnumerateChildWindows(*window.Window_t, pWnd)
   EnumChildWindows_(pWnd,@_EnumChildWindowsProc(), *window)
 EndProcedure 
 
+Enumeration
+  #PLAY
+  #RECORD
+  #STOP
+EndEnumeration
+
+
 Procedure Launch()
   Define app.Capture2Gif
   app\delay = 5
   app\outputFilename = "image"
   app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif"
   app\writer = #Null
-  Define window = OpenWindow(#PB_Any, 200,200,400,200,"ScreenCapture")
+  Define width = 400
+  Define height = 400
+  Define window = OpenWindow(#PB_Any, 
+                             200, 
+                             200,
+                             width,
+                             height,
+                             "Scr33nC0rd3r", 
+                             #PB_Window_SystemMenu|
+                             #PB_Window_SizeGadget)
+  
+  Define width
+  Define root = Widget::CreateRoot(window)
+  Define text = Widget::CreateText(root, "   enter the dragon!",0,0, width, 32)
+  Define string = Widget::CreateString(root, 0,32, width, 120)
+  Define canvas = Widget::CreateContainer(root, 0, height / 2,width, height / 2, #True)
+  Define play = Widget::CreateButton(canvas, "zob", 10, 10, width-20, 32)
+  Define stop = Widget::CreateButton(canvas, "zob", 10, 50, width-20, 32)
+  
+  Define play = Widget::CreateIcon(canvas, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
+  Define stop = Widget::CreateIcon(canvas, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
+  
+  Define check = Widget::CreateCheck(canvas, "zob", #True, 120, 10, 32, 32)
+  Widget::Draw(root)
   StickyWindow(window, #True)
-  ButtonGadget(#RECORD_BTN, 10, 160, 100, 30, "Record")
-  ButtonGadget(#STOP_BTN, 120, 160, 100, 30, "Stop")
-  ListViewGadget(#PROCESS_LIST, 10, 10, 380, 150)
+
+;   ListViewGadget(#PROCESS_LIST, 10, 10, 380, 150)
   
   Define hWnd = GetWindowByName("XSIFloatingView")
   ;Define hWnd = GetWindowByName("Softimage")
@@ -196,6 +225,14 @@ Procedure Launch()
         EndIf
         close = #True
       EndIf
+      
+    ElseIf event = #PB_Event_SizeWindow
+      Widget::Resize(root, 
+                     0, 
+                     0, 
+                     WindowWidth(window, #PB_Window_InnerCoordinate), 
+                     WindowHeight(window, #PB_Window_InnerCoordinate))
+      Widget::Draw(root)
     EndIf
     
     If record
@@ -213,7 +250,7 @@ Procedure Launch()
 EndProcedure
 Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 202
-; FirstLine = 157
+; CursorPosition = 187
+; FirstLine = 176
 ; Folding = --
 ; EnableXP
