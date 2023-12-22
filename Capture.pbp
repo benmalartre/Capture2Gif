@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://www.purebasic.com/namespace" version="1.0" creator="PureBasic 5.73 LTS (Windows - x64)">
+  <section name="config">
+    <options closefiles="1" openmode="0" name="Capture"/>
+  </section>
+  <section name="data">
+    <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
+    <log show="1"/>
+    <lastopen date="2023-12-21 19:54" user="graph" host="frapcanim2244"/>
+  </section>
+  <section name="files">
+    <file name="Capture.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="fc0751d28c1a185ec0e044914ba5c479"/>
+    </file>
+    <file name="Core.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="16eafa1c8a09b0e836bbf1f80346a8b5"/>
+    </file>
+    <file name="Image.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="09ceae79f1f81659f86e09b534bae84e"/>
+    </file>
+  </section>
+  <section name="targets">
+    <target name="Default Target" enabled="1" default="1">
+      <inputfile value="Capture.pbi"/>
+      <outputfile value=""/>
+      <options xpskin="1" debug="1"/>
+    </target>
+  </section>
+</project>
