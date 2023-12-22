@@ -158,16 +158,22 @@ Enumeration
   #STOP
 EndEnumeration
 
-Procedure OnPlay(*app.Capture2Gif)
-  Debug "PLAY : "+Str(*app)  
+Procedure OnPlay(*widget.Widget::Widget_t)
+  Define *container.Widget::Container_t = *widget\parent
+  Widget::SetLayout(*container, 1 - *container\layout)
+  Debug "PLAY : "+Str(*widget) + ": " + Str(*widget\parent)
 EndProcedure
 
-Procedure OnStop(*app.Capture2Gif)
-  Debug "STOP : "+Str(*app)  
+Procedure OnStop(*widget.Widget::Widget_t)
+  Define *container.Widget::Container_t = *widget\parent
+  Widget::SetLayout(*container, 1 - *container\layout)
+  Debug "STOP : "+Str(*widget) + ": " + Str(*widget\parent)
 EndProcedure
 
-Procedure OnZob(*app.Capture2Gif)
-  Debug "ZOB : "+Str(*app)  
+Procedure OnZob(*widget.Widget::Widget_t)
+  Define *container.Widget::Container_t = *widget\parent
+  Widget::SetLayout(*container, 1 - *container\layout)
+  Debug "ZOB : "+Str(*widget) + ": " + Str(*widget\parent)
 EndProcedure
 
 
@@ -190,29 +196,31 @@ Procedure Launch()
   
   Define root = Widget::CreateRoot(window)
 
-  Define c1 = Widget::CreateContainer(root, 0, height / 2,width, height / 2, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
+  Define c1 = Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
   Define btn1 = Widget::CreateButton(c1, "zob", 10, 10, width-20, 32)
   Define btn2 = Widget::CreateButton(c1, "zob", 10, 50, width-20, 32)
   
-  Define c2 = Widget::CreateContainer(root, 0, height / 2,width, height / 2, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+  Define c2 = Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
   Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
   Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
   
+  Define c3 = Widget::CreateContainer(root, 0, 100,width, 50, #False)
+  Define lst  = Widget::CreateString(c3,0,0,100,100)
+  
   Define check = Widget::CreateCheck(c2, "zob", #True, 120, 10, 32, 32)
-  Widget::Resize(root, 0, 0, WindowWidth(window, #PB_Window_InnerCoordinate), WindowHeight(window, #PB_Window_InnerCoordinate))
+  Widget::Resize(root, 0, 0, width, height)
   Widget::Draw(root)
   
-  Widget::SetCallback(btn1, @OnZob(), app)
-  Widget::SetCallback(btn2, @OnZob(), app)
-  Widget::SetCallback(ico1, @OnPlay(), app)
-  Widget::SetCallback(ico2, @OnStop(), app)
-  
+  Widget::SetCallback(btn1, @OnZob(), btn1)
+  Widget::SetCallback(btn2, @OnZob(), btn2)
+  Widget::SetCallback(ico1, @OnPlay(), ico1)
+  Widget::SetCallback(ico2, @OnStop(), ico2)
 
   StickyWindow(window, #True)
   
   NewMap widgets.i()
-  widgets(Str(Widget::GetCanvasId(c1))) = c1
-  Widgets(Str(Widget::GetCanvasId(c2))) = c2
+  widgets(Str(Widget::GetGadgetId(c1))) = c1
+  Widgets(Str(Widget::GetGadgetId(c2))) = c2
   
   Define hWnd = GetWindowByName("XSIFloatingView")
     
@@ -275,6 +283,7 @@ Procedure Launch()
 EndProcedure
 Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 15
+; CursorPosition = 222
+; FirstLine = 217
 ; Folding = --
 ; EnableXP

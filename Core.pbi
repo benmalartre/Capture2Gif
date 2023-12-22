@@ -126,23 +126,17 @@ Module Capture
   EndProcedure
   
   Procedure Capture(*c.Capture_t, flipBuffer.b=#True)
-    Define dstDC = StartDrawing(ImageOutput(*c\img))
     Define hWnd = *c\hWnd
     If Not hWnd : hWnd = GetDesktopWindow_() : EndIf 
     Define srcDC = GetDC_(hWnd)
-    
+    Define dstDC = StartDrawing(ImageOutput(*c\img))
     If dstDC And srcDC
       BitBlt_(dstDC,0,0,*c\rect\w,*c\rect\h,srcDC,*c\rect\x,*c\rect\y,#SRCCOPY)
     EndIf
     ReleaseDC_(hWnd, srcDC)
-
     StopDrawing()
     
-    If flipBuffer      
-      _FlipBuffer(*c)
-    Else 
-      _CopyBuffer(*c)
-    EndIf
+    If flipBuffer : _FlipBuffer(*c) : Else : _CopyBuffer(*c): EndIf
     ProcedureReturn
   EndProcedure
   
@@ -162,7 +156,7 @@ ImportC "gif.lib"
 EndImport
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 96
-; FirstLine = 18
+; CursorPosition = 122
+; FirstLine = 102
 ; Folding = --
 ; EnableXP
