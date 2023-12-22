@@ -7,20 +7,24 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2023-12-21 19:54" user="graph" host="frapcanim2244"/>
+    <lastopen date="2023-12-22 20:20" user="graph" host="frapcanim2244"/>
   </section>
   <section name="files">
     <file name="Capture.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="fc0751d28c1a185ec0e044914ba5c479"/>
+      <fingerprint md5="808ce03190b9cebe44f4b532a68ecb97"/>
     </file>
     <file name="Core.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="16eafa1c8a09b0e836bbf1f80346a8b5"/>
+      <fingerprint md5="9b51b44c5d0d1576276abad8c822d00d"/>
     </file>
     <file name="Image.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
       <fingerprint md5="09ceae79f1f81659f86e09b534bae84e"/>
+    </file>
+    <file name="Widget.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="9890c9bacd6b9e33f9e34ef5660b3599"/>
     </file>
   </section>
   <section name="targets">

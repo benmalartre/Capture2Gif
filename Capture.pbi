@@ -158,7 +158,17 @@ Enumeration
   #STOP
 EndEnumeration
 
+Procedure OnPlay(*app.Capture2Gif)
+  Debug "PLAY : "+Str(*app)  
+EndProcedure
 
+Procedure OnStop(*app.Capture2Gif)
+  Debug "STOP : "+Str(*app)  
+EndProcedure
+
+Procedure OnZob(*app.Capture2Gif)
+  Debug "ZOB : "+Str(*app)  
+EndProcedure
 
 
 Procedure Launch()
@@ -181,17 +191,23 @@ Procedure Launch()
   Define root = Widget::CreateRoot(window)
 
   Define c1 = Widget::CreateContainer(root, 0, height / 2,width, height / 2, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
-  Define play = Widget::CreateButton(c1, "zob", 10, 10, width-20, 32)
-  Define stop = Widget::CreateButton(c1, "zob", 10, 50, width-20, 32)
+  Define btn1 = Widget::CreateButton(c1, "zob", 10, 10, width-20, 32)
+  Define btn2 = Widget::CreateButton(c1, "zob", 10, 50, width-20, 32)
   
   Define c2 = Widget::CreateContainer(root, 0, height / 2,width, height / 2, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-  Define play = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
-  Define stop = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
+  Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
+  Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
   
   Define check = Widget::CreateCheck(c2, "zob", #True, 120, 10, 32, 32)
   Widget::Resize(root, 0, 0, WindowWidth(window, #PB_Window_InnerCoordinate), WindowHeight(window, #PB_Window_InnerCoordinate))
   Widget::Draw(root)
   
+  Widget::SetCallback(btn1, @OnZob(), app)
+  Widget::SetCallback(btn2, @OnZob(), app)
+  Widget::SetCallback(ico1, @OnPlay(), app)
+  Widget::SetCallback(ico2, @OnStop(), app)
+  
+
   StickyWindow(window, #True)
   
   NewMap widgets.i()
@@ -259,7 +275,6 @@ Procedure Launch()
 EndProcedure
 Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 243
-; FirstLine = 208
+; CursorPosition = 15
 ; Folding = --
 ; EnableXP

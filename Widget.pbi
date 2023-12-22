@@ -3,11 +3,13 @@
 ;================================================================================================
 DeclareModule Widget
   Enumeration
-    #WIDGET_STATE_INACTIVE = 0
+    #WIDGET_STATE_DEFAULT  = 0
     #WIDGET_STATE_ACTIVE   = 1
-    #WIDGET_STATE_HOVER    = 2
-    #WIDGET_STATE_PRESS    = 4
-    #WIDGET_STATE_TOGGLE   = 8
+    #WIDGET_STATE_INACTIVE = 2
+    #WIDGET_STATE_HOVER    = 4
+    #WIDGET_STATE_PRESS    = 8
+    #WIDGET_STATE_TOGGLE   = 16
+    #WIDGET_STATE_ROOT     = 32
   EndEnumeration
   
   Enumeration
@@ -30,6 +32,8 @@ DeclareModule Widget
   #WIDGET_PADDING_X = 6
   #WIDGET_PADDING_Y = 6
   
+  Prototype CallbackFn(*data=#Null)
+  
   Structure Widget_t
     type.i
     x.i
@@ -38,6 +42,8 @@ DeclareModule Widget
     height.i
     state.i
     *parent.Widget_t
+    callback.CallbackFn
+    *data
   EndStructure
   
   Structure Layout_t
@@ -47,6 +53,8 @@ DeclareModule Widget
 
   Structure Container_t Extends Widget_t
     List *items.Widget_t()
+    *hovered.Widget_t
+    *active.Widget_t
     canvas.i
     layout.i
   EndStructure
@@ -79,10 +87,13 @@ DeclareModule Widget
   Declare CreateString(*p.Container_t, x.i, y.i, w.i, h.i)
   Declare CreateCheck(*p.Container_t, label.s, check.b, x.i, y.i, w.i, h.i)
   Declare SetLayout(*p.Container_t, layout.i)
+  Declare SetCallback(*widget.Widget_t, cb.CallbackFn, *data)
   Declare Resize(*widget.Widget_t, x.i, y.i, w.i, h.i)
   Declare Draw(*widget.Widget_t)
-  Declare OnEvent(*widget.Widget_t)
+  Declare OnEvent(*widget.Container_t)
+  Declare Callback(*widget.Widget_t)
   Declare GetCanvasId(*widget.Widget_t)
+
 EndDeclareModule
 
 ;================================================================================================
@@ -90,27 +101,26 @@ EndDeclareModule
 ;================================================================================================
 Module Widget
   Procedure _Set(*widget.Widget_t, t.i, parent.i, x.i, y.i, w.i, h.i)
-    *widget\type    = t
-    *widget\x       = x
-    *widget\y       = y
-    *widget\width   = w
-    *widget\height  = h
-    *widget\parent  = parent
+    *widget\type     = t
+    *widget\x        = x
+    *widget\y        = y
+    *widget\width    = w
+    *widget\height   = h
+    *widget\parent   = parent
+  EndProcedure
+  
+  Procedure _GetRoot(*widget.Widget_t)
+    If *widget\state & #WIDGET_STATE_ROOT
+      ProcedureReturn *widget
+    Else
+      ProcedureReturn _GetRoot(*widget\parent)
+    EndIf
   EndProcedure
   
   Procedure _AddItem(*parent.Container_t, *item.Widget_t)
     If Not *parent : ProcedureReturn : EndIf
     AddElement(*parent\items())
     *parent\items() = *item
-  EndProcedure
-  
-  Procedure _GetRoot(*widget.Widget_t)
-    If Not *widget\parent
-      ProcedureReturn *widget
-    Else
-      ProcedureReturn _GetRoot(*widget\parent)
-    EndIf
-    
   EndProcedure
   
   Procedure _RemoveItem(*parent.Container_t, *item.Widget_t)
@@ -141,9 +151,14 @@ Module Widget
     EndIf
   EndProcedure
   
+  Procedure SetLayout(*p.Container_t, layout.i)
+    *p\layout = layout  
+  EndProcedure
+  
   Procedure.b _IsInside(*widget.Widget_t, x.i, y.i) 
     Define insideBox.b = Bool(x > *widget\x And x < (*widget\x + *widget\width) And 
-                            y > *widget\y And y < (*widget\y + *widget\height))
+                              y > *widget\y And y < (*widget\y + *widget\height))
+    
     If *widget\type = #WIDGET_TYPE_ICON
       Define *icon.Icon_t = *widget
       AddPathSegments(*icon\icon)
@@ -155,23 +170,18 @@ Module Widget
     ProcedureReturn insideBox
   EndProcedure
   
-  
   Procedure _GetWidgetUnderMouse(*widget.Container_t)
     Define canvasId = GetCanvasId(*widget)
     Define mouseX = GetGadgetAttribute(canvasId, #PB_Canvas_MouseX)
     Define mouseY = GetGadgetAttribute(canvasId, #PB_Canvas_MouseY)
-    Define *hovered = #Null
-    StartVectorDrawing(CanvasVectorOutput(canvasId))
     ForEach *widget\items()
       If _IsInside(*widget\items(), mouseX, mouseY)
         *widget\items()\state = #WIDGET_STATE_HOVER
-        *hovered = *widget\items()
+        *widget\hovered = *widget\items()
       Else
         *widget\items()\state = #WIDGET_STATE_INACTIVE
       EndIf
     Next
-    StopVectorDrawing()
-    ProcedureReturn *hovered
   EndProcedure
   
   Procedure GetCanvasId(*widget.Widget_t)
@@ -186,7 +196,10 @@ Module Widget
   EndProcedure
   
   Procedure Resize(*widget.Widget_t, x.i, y.i, w.i, h.i)
-    _Set(*widget, *widget\type, *widget\parent, x, y, w, h)
+    *widget\x = x
+    *widget\y = y
+    *widget\width = w
+    *widget\height = h
     If *widget\type >= #WIDGET_TYPE_CONTAINER
       Define *container.Container_t = *widget
       If IsGadget(*container\canvas) 
@@ -229,30 +242,43 @@ Module Widget
           Next
           
        EndSelect
-    EndIf
+     EndIf
   EndProcedure
   
-  Procedure OnEvent(*widget.Widget_t)
+  Procedure OnEvent(*widget.Container_t)
     Define event.i = EventType()    
     If event = #PB_EventType_LeftClick
-      Debug "LEFT CLICK" + Str(*widget)
-      ;       Debug GetGadgetAttribute(*widget
+      If *widget\hovered
+        Debug *widget\hovered
+        Debug *widget\hovered\callback
+        Debug *widget\hovered\data
+        Callback(*widget\hovered)
+      EndIf
+      
     ElseIf event = #PB_EventType_MouseMove
-      _GetWidgetUnderMouse(*widget)
-      Draw(*widget)
-      Debug "Widget Under mouse : "+Str(*widget)
-    
+      Draw(*widget)    
     EndIf   
   EndProcedure
   
+  Procedure SetCallback(*widget.Widget_t, cb.CallbackFn, *data)
+    *widget\callback = cb
+    *widget\data = *data
+  EndProcedure
   
+  Procedure Callback(*widget.Widget_t)
+    If *widget\callback
+      *widget\callback(*widget\data)
+    EndIf
+  EndProcedure
+
   Procedure Draw(*widget.Widget_t)
+    Define fontId = GetGadgetFont(#PB_Default)
     If *widget\type >= #WIDGET_TYPE_CONTAINER
       Define *container.Container_t = *widget
       Define c = IsGadget(*container\canvas)
       If c 
         StartVectorDrawing(CanvasVectorOutput(c))
-        Define fontId = GetGadgetFont(#PB_Default)
+        _GetWidgetUnderMouse(*widget)
         VectorFont(fontId, 32)
         AddPathBox(0,0,GadgetWidth(*container\canvas), GadgetHeight(*container\canvas))
         VectorSourceColor(RGBA(Random(128),Random(128),Random(128),Random(128)))
@@ -272,13 +298,14 @@ Module Widget
           StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
           VectorSourceColor(RGBA(255, 255, 255, 120))
           StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
+          
           If *icon\state = #WIDGET_STATE_HOVER
             VectorSourceColor(RGBA(155,25,25,255))
           Else
             VectorSourceColor(RGBA(25,125,25,255))
           EndIf
+       
           FillPath()
-
           ResetCoordinates()
           
         Case #WIDGET_TYPE_BUTTON
@@ -291,6 +318,7 @@ Module Widget
           VectorSourceColor(RGBA(55,55,55, 255))
           FillPath()
           MovePathCursor((*widget\width - VectorTextWidth(*button\text))/2, *widget\y)
+          
           If *button\state = #WIDGET_STATE_HOVER
             VectorSourceColor(RGBA(120, 120, 120, 255))
           Else
@@ -310,40 +338,42 @@ Module Widget
   
   
   Procedure CreateRoot(window)
-    Define *widget.Container_t = AllocateStructure(Container_t)
+    Define *root.Container_t = AllocateStructure(Container_t)
     Define width = WindowWidth(window, #PB_Window_InnerCoordinate)
     Define height = WindowHeight(window, #PB_Window_InnerCoordinate)
-    _Set(*widget, #WIDGET_TYPE_CONTAINER, #Null, 0, 0, w, h)
-    *widget\canvas = 0
-    *widget\layout = #WIDGET_LAYOUT_VERTICAL
-    ProcedureReturn *widget
+    _Set(*root, #WIDGET_TYPE_CONTAINER, #Null, 0, 0, w, h)
+    *root\state = #WIDGET_STATE_ROOT
+    *root\canvas = 0
+    *root\layout = #WIDGET_LAYOUT_VERTICAL
+    *root\hovered = #Null
+    ProcedureReturn *root
   EndProcedure
   
   Procedure CreateContainer(*p.Widget_t, x.i, y.i, w.i, h.i, c.b=#False, l.i=#WIDGET_LAYOUT_VERTICAL)
     Define *widget.Container_t = AllocateStructure(Container_t)
     _Set(*widget, #WIDGET_TYPE_CONTAINER, *p, x, y, w, h)
     _AddItem(*p, *widget)
-    
     If c 
       *widget\canvas = CanvasGadget(#PB_Any, x, y, w, h, #PB_Canvas_Keyboard)
     EndIf
     *widget\layout = l
+    *widget\hovered = #Null
     ProcedureReturn *widget
   EndProcedure
   
   Procedure CreateButton(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
      Define *widget.Button_t = AllocateStructure(Button_t)
-    *widget\text = text
     _Set(*widget, #WIDGET_TYPE_BUTTON, *p, x, y, w, h)
     _AddItem(*p, *widget)
+    *widget\text = text
     ProcedureReturn *widget
   EndProcedure
   
   Procedure CreateIcon(*p.Container_t, icon.s, x.i, y.i, w.i, h.i)
     Define *widget.Icon_t = AllocateStructure(Icon_t)
-    *widget\icon= icon
     _Set(*widget, #WIDGET_TYPE_ICON, *p, x, y, w, h)
     _AddItem(*p, *widget)
+    *widget\icon= icon
     ProcedureReturn *widget
   EndProcedure
   
@@ -371,17 +401,13 @@ Module Widget
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure SetLayout(*p.Container_t, layout.i)
-    *p\layout = layout  
-  EndProcedure
-  
   
 EndModule
 
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 152
-; FirstLine = 103
-; Folding = b+P9
+; CursorPosition = 333
+; FirstLine = 304
+; Folding = --fA-
 ; EnableXP
