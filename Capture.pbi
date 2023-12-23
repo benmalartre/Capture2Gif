@@ -176,10 +176,8 @@ Module Scr33nCord3r
     Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 50, width-20, 32)
     
     Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-;     Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
-;     Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
-    Define btn3 = Widget::CreateButton(c2, "Select Region", 10, 10, width-20, 32)
-    Define btn4 = Widget::CreateButton(c2, "Select Window", 10, 50, width-20, 32)
+    Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
+    Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
     
     Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
     Define lst  = Widget::CreateString(c3,0,0,100,100)
@@ -188,10 +186,11 @@ Module Scr33nCord3r
     Widget::Resize(root, 0, 0, width, height)
     Widget::Draw(root)
     
+    Widget::SetState(ico1, Widget::#WIDGET_STATE_TOGGLE)
     Widget::SetCallback(btn1, @SelectRectangle(), app)
     Widget::SetCallback(btn2, @SelectWindow(), app)
-;     Widget::SetCallback(ico1, @OnPlay(), ico1)
-;     Widget::SetCallback(ico2, @OnStop(), ico2)
+    Widget::SetCallback(ico1, @OnPlay(), ico1)
+    Widget::SetCallback(ico2, @OnStop(), ico2)
   
     StickyWindow(app\window, #True)
     
@@ -249,16 +248,12 @@ Module Scr33nCord3r
     Capture::Term(app\capture)  
   EndProcedure
   
-  Procedure OnPlay(*widget.Widget::Widget_t)
-    Define *container.Widget::Container_t = *widget\parent
-    Widget::SetLayout(*container, 1 - *container\layout)
-    Debug "PLAY : "+Str(*widget) + ": " + Str(*widget\parent)
+  Procedure OnPlay(*app.App_t)
+
   EndProcedure
   
   Procedure OnStop(*widget.Widget::Widget_t)
-    Define *container.Widget::Container_t = *widget\parent
-    Widget::SetLayout(*container, 1 - *container\layout)
-    Debug "STOP : "+Str(*widget) + ": " + Str(*widget\parent)
+
   EndProcedure
   
   Procedure OnZob(*widget.Widget::Widget_t)
@@ -270,7 +265,7 @@ EndModule
 
 Scr33nCord3r::Launch()
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 193
-; FirstLine = 148
+; CursorPosition = 255
+; FirstLine = 212
 ; Folding = --
 ; EnableXP

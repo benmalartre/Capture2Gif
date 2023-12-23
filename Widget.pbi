@@ -5,7 +5,7 @@ DeclareModule Widget
   Enumeration
     #WIDGET_STATE_DEFAULT  = 0
     #WIDGET_STATE_ACTIVE   = 1
-    #WIDGET_STATE_INACTIVE = 2
+    #WIDGET_STATE_DISBALE  = 2
     #WIDGET_STATE_HOVER    = 4
     #WIDGET_STATE_PRESS    = 8
     #WIDGET_STATE_TOGGLE   = 16
@@ -94,7 +94,10 @@ DeclareModule Widget
   Declare Draw(*widget.Widget_t)
   Declare Callback(*widget.Widget_t)
   Declare GetGadgetId(*widget.Widget_t)
-
+  Declare SetState(*widget.Widget_t, state)
+  Declare ClearState(*widget.Widget_t, state)
+  Declare ToggleState(*widget.Widget_t, state)
+  Declare GetState(*widget.Widget_t, state)
 EndDeclareModule
 
 ;------------------------------------------------------------------------------------------------
@@ -174,10 +177,10 @@ Module Widget
     *widget\hovered = #Null
     ForEach *widget\items()
       If _IsInside(*widget\items(), mouseX, mouseY)
-        *widget\items()\state = #WIDGET_STATE_HOVER
+        *widget\items()\state | #WIDGET_STATE_HOVER
         *widget\hovered = *widget\items()
       Else
-        *widget\items()\state = #WIDGET_STATE_INACTIVE
+        *widget\items()\state &~ #WIDGET_STATE_HOVER
       EndIf
     Next
     ResetPath()
@@ -217,18 +220,18 @@ Module Widget
               Resize(*container\items(),x, cy, w, nh)
             Else
               Resize(*container\items(),
-                     x+#WIDGET_PADDING_X, 
+                     #WIDGET_PADDING_X, 
                      cy + #WIDGET_PADDING_Y, 
                      w-2*#WIDGET_PADDING_X, 
-                     nh-#WIDGET_PADDING_Y)
+                     nh-2*#WIDGET_PADDING_Y)
             EndIf
             cy + nh
           Next
           
         Case #WIDGET_LAYOUT_HORIZONTAL
-          Define nw = (w + numItems * #WIDGET_PADDING_Y)  / numItems
-          Define cx = #WIDGET_PADDING_X
-          Define cy = #WIDGET_PADDING_Y
+          Define nw = w / numItems
+          Define cx = 0
+          Define cy = 0
           ForEach *container\items()
             If *container\items()\type >= #WIDGET_TYPE_CONTAINER
               Resize(*container\items(),cx, y, nw, h)
@@ -236,7 +239,7 @@ Module Widget
               Resize(*container\items(),
                      cx + #WIDGET_PADDING_X, 
                      #WIDGET_PADDING_Y, 
-                     nw,
+                     nw - 2*#WIDGET_PADDING_X,
                      h-2*#WIDGET_PADDING_Y)
             EndIf
             cx + nw
@@ -258,7 +261,13 @@ Module Widget
   Procedure OnEvent(*widget.Container_t)
     Define event.i = EventType()    
     If event = #PB_EventType_LeftClick
-      If *widget\hovered : Callback(*widget\hovered) :EndIf
+      If *widget\hovered 
+        If GetState(*widget\hovered, #WIDGET_STATE_TOGGLE)
+          ToggleState(*widget\hovered, Widget::#WIDGET_STATE_ACTIVE)
+        EndIf
+        
+        Callback(*widget\hovered)
+      EndIf
       
     ElseIf event = #PB_EventType_MouseMove
       Draw(*widget)    
@@ -287,7 +296,7 @@ Module Widget
       If c 
         StartVectorDrawing(CanvasVectorOutput(*container\gadget))
         ResetPath()
-        VectorFont(fontId, 32)
+        VectorFont(fontId, 13)
         AddPathBox(0,0,GadgetWidth(*container\gadget), GadgetHeight(*container\gadget))
         VectorSourceColor(RGBA(Random(128),Random(128),Random(128),Random(255)))
         FillPath()
@@ -303,43 +312,52 @@ Module Widget
         Case #WIDGET_TYPE_ICON
           Define *icon.Icon_t = *widget
           _RoundBoxPath(*widget\x, *widget\y, *widget\width, *widget\height,8)
+          Define bx = PathBoundsX()
+          Define by = PathBoundsY()
+          Define bw = PathBoundsWidth()
+          Define bh = PathBoundsHeight()
+          
           VectorSourceColor(RGBA(55, 55, 55, 122))
           StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd)
-          MovePathCursor(*widget\x, *widget\y)
+          MovePathCursor(*widget\x + *widget\width/2, *widget\y, #PB_Path_Relative)
           AddPathSegments(*icon\icon, #PB_Path_Relative )
           VectorSourceColor(RGBA(55, 55, 55, 22))
           StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
           VectorSourceColor(RGBA(255, 255, 255, 120))
           StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
           
-          If *icon\state = #WIDGET_STATE_HOVER
+          If Widget::GetState(*icon, #WIDGET_STATE_HOVER)
             VectorSourceColor(RGBA(155,25,25,255))
           Else
-            VectorSourceColor(RGBA(25,125,25,255))
+            If Widget::GetState(*icon, #WIDGET_STATE_ACTIVE)
+              VectorSourceColor(RGBA(25,125,25,255))
+            Else
+              VectorSourceColor(RGBA(125,125,25,255))
+              EndIf
           EndIf
        
           FillPath()
           
         Case #WIDGET_TYPE_BUTTON
-          Define *button.Button_t = *widget
-          _RoundBoxPath(*widget\x, *widget\y, *widget\width, *widget\height,8)
-          VectorSourceColor(RGBA(55, 55, 55, 22))
-          StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
-          VectorSourceColor(RGBA(255, 255, 255, 120))
-          StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
-          VectorSourceColor(RGBA(55,55,55, 255))
-          FillPath()
-          MovePathCursor(*widget\x +(*widget\width - VectorTextWidth(*button\text))/2, 
-                         *widget\y + *widget\height/2)
-          
-          If *button\state = #WIDGET_STATE_HOVER
-            VectorSourceColor(RGBA(120, 120, 120, 255))
-          Else
-            VectorSourceColor(RGBA(255, 255, 255, 255))
-          EndIf
-          
-          DrawVectorText(*button\text)
-          StrokePath(2)
+;           Define *button.Button_t = *widget
+;           _RoundBoxPath(*widget\x, *widget\y, *widget\width, *widget\height,8)
+;           VectorSourceColor(RGBA(55, 55, 55, 22))
+;           StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
+;           VectorSourceColor(RGBA(255, 255, 255, 120))
+;           StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
+;           VectorSourceColor(RGBA(55,55,55, 255))
+;           FillPath()
+;           MovePathCursor(*widget\x +(*widget\width - VectorTextWidth(*button\text))/2, 
+;                          *widget\y + *widget\height/2)
+;           
+;           If *button\state = #WIDGET_STATE_HOVER
+;             VectorSourceColor(RGBA(120, 120, 120, 255))
+;           Else
+;             VectorSourceColor(RGBA(255, 255, 255, 255))
+;           EndIf
+;           
+;           DrawVectorText(*button\text)
+;           StrokePath(2)
           
         Case #WIDGET_TYPE_TEXT
           
@@ -347,6 +365,22 @@ Module Widget
       
     EndIf
     
+  EndProcedure
+  
+  Procedure SetState(*widget.Widget_t, state)
+    *widget\state | state
+  EndProcedure
+  
+  Procedure ClearState(*widget.Widget_t, state)
+    *widget\state &~ state
+  EndProcedure
+   
+  Procedure ToggleState(*widget.Widget_t, state)
+    *widget\state ! state
+  EndProcedure
+  
+  Procedure GetState(*widget.Widget_t, state)
+    ProcedureReturn *widget\state & state
   EndProcedure
   
   Procedure CreateRoot(window)
@@ -422,7 +456,7 @@ EndModule
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 83
-; FirstLine = 67
-; Folding = DAVA-
+; CursorPosition = 60
+; FirstLine = 42
+; Folding = DI4Hw
 ; EnableXP

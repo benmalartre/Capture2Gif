@@ -7,25 +7,6 @@ UsePNGImageDecoder()
 UseTGAImageDecoder()
 UseTIFFImageDecoder()
 
-Structure Mask_t
-  b.a[16]
-EndStructure
-
-DataSection
-  swap_red_blue_mask:
-  Data.a 2,1,0,3,6,5,4,7,10,9,8,11,14,13,12,15
-EndDataSection
-
-;------------------------------------------------------------------------------------------------
-; IMPORT C FUNCTIONS
-;------------------------------------------------------------------------------------------------
-ImportC "gif.lib"
-  AnimatedGif_Init(filename.p-utf8, width.l, height.l, delay.i)
-  AnimatedGif_Term(*writer)
-  AnimatedGif_AddFrame(*writer, *datas)
-EndImport
-
-
 Procedure GetNumBytesPerPixels(format.i)
   
   If format & #PB_PixelFormat_ReversedY 
@@ -118,7 +99,7 @@ FreeMemory(*buffer)
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 56
-; FirstLine = 29
+; CursorPosition = 7
+; FirstLine = 34
 ; Folding = -
 ; EnableXP
