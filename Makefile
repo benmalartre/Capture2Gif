@@ -16,7 +16,6 @@ CFLAGS = -DPLATFORM_DARWIN \
 	 -O3 \
 	 -D_LANGUAGE_C_PLUS_PLUS\
 	 -mmacosx-version-min=10.9\
-	 -arch x86_64\
 	 -fPIC\
 	 -DNDEBUG\
 	 -static

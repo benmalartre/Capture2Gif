@@ -190,7 +190,7 @@ Module Scr33nCord3r
     Widget::SetCallback(btn1, @SelectRectangle(), app)   
     Widget::SetCallback(btn2, @SelectWindow(), app) 
     Widget::SetCallback(ico1, @OnPlay(), ico1)
-    Widget::SetCallback(ico2, @OnStop(), ico2)
+    Widget::SetCallback(ico2, @OnZob(), ico2)
   
     StickyWindow(app\window, #True)
     
@@ -253,18 +253,28 @@ Module Scr33nCord3r
 
   EndProcedure
   
-  Procedure OnStop(*widget.Widget::Widget_t)
+  Procedure OnStop(*app.App_t)
 
   EndProcedure
   
-  Procedure OnZob(*widget.Widget::Widget_t)
-    Define *container.Widget::Container_t = *widget\parent
-    Widget::SetLayout(*container, 1 - *container\layout)
-    Debug "ZOB : "+Str(*widget) + ": " + Str(*widget\parent)
+
+  
+  Procedure OnZob(*app.App_t)
+    Debug "ZOB"
+    Define writer = Capture::AnimatedGif_Init("/Users/malartrebenjamin/Documents/RnD/Capture2Gif/zob.gif", 256, 256, 10)
+    Define buffer = AllocateMemory(256 *256 *4)
+    For i = 0 To 32
+        RandomData(buffer, 256 * 256 * 4)
+        Capture::AnimatedGif_AddFrame(writer, buffer)
+      Next
+      Capture::AnimatedGif_Term(writer)
+      FreeMemory(buffer)
   EndProcedure
 EndModule
 
 Scr33nCord3r::Launch()
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
+; CursorPosition = 263
+; FirstLine = 241
 ; Folding = --
 ; EnableXP
