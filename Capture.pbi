@@ -1,8 +1,4 @@
-﻿
-CompilerIf #PB_Compiler_OS = #PB_OS_Windows
-  XIncludeFile "Win.pbi"
-CompilerEndIf
-
+﻿XIncludeFile "Win.pbi"
 XIncludeFile "Core.pbi"
 XIncludeFile "Widget.pbi"
 ;-----------------------------------------------------------------------------------------------
@@ -49,8 +45,8 @@ EndDeclareModule
 Module Scr33nCord3r
   UseModule Capture
   Procedure GetRectangle(*rect.Rectangle_t, hwnd=#Null)
-    If InitMouse() = 0 Or InitSprite() = 0 Or InitKeyboard() = 0
-      MessageRequester("Error", "Can't open DirectX", 0)
+    If InitSprite() = 0
+      MessageRequester("Error", "Can't open hardware acceleration", 0)
       End
     EndIf
     
@@ -67,7 +63,7 @@ Module Scr33nCord3r
     Init(background, rect, hwnd)
     Capture(background, #False)
     
-    Define screen = OpenScreen(width, height, 32, "Capture") 
+    Define screen = OpenScreen(width, height,32, "Capture") 
     If Not screen
       MessageRequester("Error", "Impossible to open a "+Str(width)+"*"+Str(height)+" 32-bit screen",0)
       End
@@ -171,10 +167,10 @@ Module Scr33nCord3r
                              #PB_Window_SystemMenu|
                              #PB_Window_SizeGadget)
     
-    Define root = Widget::CreateRoot(app\window)
+    app\hWnd = GetWindo
     
-;     Define c0 =   Widget::CreateContainer(root, 0, 50,width, 50, #False, Widget::#WIDGET_LAYOUT_VERTICAL)
-;     Define explorer = Widget::CreateExplorer(c0, 10, 10, width-20, 32)
+    Define root = Widget::CreateRoot(app\window)
+    ;     Define c0 =   Widget::CreateContainer(root, 0, 50,width, 50, #False, Widget::#WIDGET_LAYOUT_VERTICAL));     Define explorer = Widget::CreateExplorer(c0, 10, 10, width-20, 32))
   
     Define c1 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
     Define btn1 = Widget::CreateButton(c1, "Select Region", 10, 10, width-20, 32)
@@ -190,16 +186,15 @@ Module Scr33nCord3r
     
     Widget::Resize(root, 0, 0, width, height)
     Widget::Draw(root)
-    
     Widget::SetState(ico1, Widget::#WIDGET_STATE_TOGGLE)
-    Widget::SetCallback(btn1, @SelectRectangle(), app)
-    Widget::SetCallback(btn2, @SelectWindow(), app)
+    Widget::SetCallback(btn1, @SelectRectangle(), app)   
+    Widget::SetCallback(btn2, @SelectWindow(), app) 
     Widget::SetCallback(ico1, @OnPlay(), ico1)
     Widget::SetCallback(ico2, @OnStop(), ico2)
   
     StickyWindow(app\window, #True)
     
-    NewMap widgets.i()
+    NewMap widgets.i()    
     widgets(Str(Widget::GetGadgetId(c1))) = c1
     Widgets(Str(Widget::GetGadgetId(c2))) = c2
 ;     
@@ -271,7 +266,5 @@ EndModule
 
 Scr33nCord3r::Launch()
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 200
-; FirstLine = 173
 ; Folding = --
 ; EnableXP

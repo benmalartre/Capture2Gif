@@ -8,6 +8,8 @@
 EndDeclareModule
 
 Module Win
+ CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+
   ; helper function to enumerate open windows
   ;
   Procedure _EnumerateWindows(*window.Window_t)
@@ -48,8 +50,17 @@ Module Win
   Procedure EnumerateChildWindows(*window.Window_t, pWnd)
     EnumChildWindows_(pWnd,@_EnumChildWindowsProc(), *window)
   EndProcedure 
+  
+CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
+  ; try get a window by it's name
+  ;
+  Procedure GetWindowByName(name.s="Softimage")
+    
+  EndProcedure
+CompilerEndIf
 EndModule
-
-; IDE Options = PureBasic 5.73 LTS (Windows - x64)
+; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
+; CursorPosition = 56
+; FirstLine = 23
 ; Folding = --
 ; EnableXP

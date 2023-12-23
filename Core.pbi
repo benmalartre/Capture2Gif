@@ -24,7 +24,11 @@ DeclareModule Capture
   ;------------------------------------------------------------------------------------------------
   ; IMPORT C FUNCTIONS
   ;------------------------------------------------------------------------------------------------
-  ImportC "gif.a"
+  CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+    ImportC "Gif.lib"
+  CompilerElse
+    ImportC "Gif.a"
+  CompilerEndIf
     AnimatedGif_Init(filename.p-utf8, width.l, height.l, delay.i)
     AnimatedGif_Term(*writer)
     AnimatedGif_AddFrame(*writer, *cs)
@@ -124,8 +128,20 @@ Module Capture
           *c\rect\w = rect\w
           *c\rect\h = rect\h
         EndIf
-      CompilerElse
+      CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
+        Define frame.CGRect
+  
+        CocoaMessage(@frame, hWnd, "frame")
         
+        frame\origin\x = 100
+        ; this will be from bottom of screen!
+        ; correct calculation: ScreenHeight() - WindowHeight() - 100
+        frame\origin\y = 100
+        frame\size\width = 200
+        frame\size\height = 300
+        
+        CocoaMessage(0, CocoaMessage(0, hWnd, "animator"), "setFrame:@", @frame, "display:", #YES) 
+  
       CompilerEndIf
       
     Else
@@ -162,6 +178,7 @@ Module Capture
   EndProcedure 
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 26
+; CursorPosition = 30
+; FirstLine = 6
 ; Folding = --
 ; EnableXP
