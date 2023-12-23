@@ -21,6 +21,8 @@ DeclareModule Widget
     #WIDGET_TYPE_STRING
     #WIDGET_TYPE_CHECK
     #WIDGET_TYPE_COMBO
+    #WIDGET_TYPE_LIST
+    #WIDGET_TYPE_EXPLORER
     #WIDGET_TYPE_CONTAINER
   EndEnumeration
   
@@ -64,6 +66,10 @@ DeclareModule Widget
     gadget.i
   EndStructure
   
+  Structure Explorer_t Extends Widget_t
+    gadget.i
+  EndStructure
+  
   Structure String_t Extends Widget_t
     gadget.i
   EndStructure
@@ -74,10 +80,18 @@ DeclareModule Widget
   
   Structure Icon_t Extends Widget_t
     icon.s
+    ix.i
+    iy.i
+    iw.i
+    ih.i
   EndStructure
   
   Structure Check_t Extends Widget_t
     check.i
+  EndStructure
+  
+  Structure List_t Extends Widget_t
+    gadget.i
   EndStructure
   
   Declare CreateRoot(window.i)
@@ -85,8 +99,10 @@ DeclareModule Widget
   Declare CreateButton(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
   Declare CreateIcon(*p.Container_t, icon.s, x.i, y.i, w.i, h.i)
   Declare CreateText(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
+  Declare CreateExplorer(*p.Container_t, x.i, y.i, w.i, h.i)
   Declare CreateString(*p.Container_t, x.i, y.i, w.i, h.i)
   Declare CreateCheck(*p.Container_t, label.s, check.b, x.i, y.i, w.i, h.i)
+  Declare CreateList(*p.Container_t, label.s, x.i, y.i, w.i, h.i)
   Declare OnEvent(*widget.Container_t)
   Declare SetLayout(*p.Container_t, layout.i)
   Declare SetCallback(*widget.Widget_t, cb.CallbackFn, *data)
@@ -162,10 +178,10 @@ Module Widget
     If *widget\type = #WIDGET_TYPE_ICON
       Define *icon.Icon_t = *widget
       AddPathSegments(*icon\icon)
-      Define rx.i = (x - *widget\x)
-      Define ry.i = (y - *widget\y)
-      ProcedureReturn Bool(rx > 0 And rx < PathBoundsWidth() And 
-                           ry > 0 And ry < PathBoundsHeight())
+      Define rx.i = x - (*widget\x + (*icon\width-*icon\iw)/2)
+      Define ry.i = (y - *widget\y - *icon\iy)
+      ProcedureReturn Bool(rx > 0 And rx < *icon\iw And 
+                           ry > 0 And ry < *icon\ih)
     EndIf
     ProcedureReturn insideBox
   EndProcedure
@@ -253,6 +269,10 @@ Module Widget
     ElseIf *widget\type = #WIDGET_TYPE_STRING
       Define *string.String_t = *widget
       ResizeGadget(*string\gadget, x, y, w, h)
+      
+    ElseIf *widget\type = #WIDGET_TYPE_LIST
+      Define *list.List_t = *widget
+      ResizeGadget(*list\gadget, x, y, w, h)
 
     EndIf
     
@@ -317,14 +337,18 @@ Module Widget
           Define bw = PathBoundsWidth()
           Define bh = PathBoundsHeight()
           
+          
           VectorSourceColor(RGBA(55, 55, 55, 122))
           StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd)
-          MovePathCursor(*widget\x + *widget\width/2, *widget\y, #PB_Path_Relative)
+          MovePathCursor(*widget\x + *widget\width/2-*icon\iw/2, *widget\y, #PB_Path_Relative)
+
           AddPathSegments(*icon\icon, #PB_Path_Relative )
           VectorSourceColor(RGBA(55, 55, 55, 22))
           StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
           VectorSourceColor(RGBA(255, 255, 255, 120))
           StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
+          VectorSourceColor(RGBA(Random(255),Random(255),25,255))
+          FillPath(#PB_Path_Preserve)
           
           If Widget::GetState(*icon, #WIDGET_STATE_HOVER)
             VectorSourceColor(RGBA(155,25,25,255))
@@ -339,25 +363,25 @@ Module Widget
           FillPath()
           
         Case #WIDGET_TYPE_BUTTON
-;           Define *button.Button_t = *widget
-;           _RoundBoxPath(*widget\x, *widget\y, *widget\width, *widget\height,8)
-;           VectorSourceColor(RGBA(55, 55, 55, 22))
-;           StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
-;           VectorSourceColor(RGBA(255, 255, 255, 120))
-;           StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
-;           VectorSourceColor(RGBA(55,55,55, 255))
-;           FillPath()
-;           MovePathCursor(*widget\x +(*widget\width - VectorTextWidth(*button\text))/2, 
-;                          *widget\y + *widget\height/2)
-;           
-;           If *button\state = #WIDGET_STATE_HOVER
-;             VectorSourceColor(RGBA(120, 120, 120, 255))
-;           Else
-;             VectorSourceColor(RGBA(255, 255, 255, 255))
-;           EndIf
-;           
-;           DrawVectorText(*button\text)
-;           StrokePath(2)
+          Define *button.Button_t = *widget
+          _RoundBoxPath(*widget\x, *widget\y, *widget\width, *widget\height,8)
+          VectorSourceColor(RGBA(55, 55, 55, 22))
+          StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
+          VectorSourceColor(RGBA(255, 255, 255, 120))
+          StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
+          VectorSourceColor(RGBA(55,55,55, 255))
+          FillPath()
+          MovePathCursor(*widget\x +(*widget\width - VectorTextWidth(*button\text))/2, 
+                         *widget\y + *widget\height/2)
+          
+          If *button\state = #WIDGET_STATE_HOVER
+            VectorSourceColor(RGBA(120, 120, 120, 255))
+          Else
+            VectorSourceColor(RGBA(255, 255, 255, 255))
+          EndIf
+          
+          DrawVectorText(*button\text)
+          StrokePath(2)
           
         Case #WIDGET_TYPE_TEXT
           
@@ -423,12 +447,27 @@ Module Widget
     _Set(*widget, #WIDGET_TYPE_ICON, *p, x, y, w, h)
     _AddItem(*p, *widget)
     *widget\icon= icon
+    StartVectorDrawing(CanvasVectorOutput(*p\gadget))
+    AddPathSegments(*widget\icon)
+    *widget\ix = PathBoundsX()
+    *widget\iy = PathBoundsY()
+    *widget\iw = PathBoundsWidth()
+    *widget\ih = PathBoundsHeight()
+    StopVectorDrawing()
     ProcedureReturn *widget
   EndProcedure
   
   Procedure CreateText(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
     Define *widget.Text_t = AllocateStructure(Text_t)
     *widget\gadget = TextGadget(#PB_Any, x, y, w, h, text)
+    _Set(*widget, #WIDGET_TYPE_TEXT, *p, x, y, w, h)
+    _AddItem(*p, *widget)
+    ProcedureReturn *widget
+  EndProcedure
+  
+  Procedure CreateExplorer(*p.Container_t, x.i, y.i, w.i, h.i)
+    Define *widget.Explorer_t = AllocateStructure(Explorer_t)
+    *widget\gadget = ExplorerComboGadget(#PB_Any, x, y, w, h, "C:\")
     _Set(*widget, #WIDGET_TYPE_TEXT, *p, x, y, w, h)
     _AddItem(*p, *widget)
     ProcedureReturn *widget
@@ -450,13 +489,22 @@ Module Widget
     ProcedureReturn *widget
   EndProcedure
   
-  
+  Procedure CreateList(*p.Container_t, label.s, x.i, y.i, w.i, h.i)
+    Define *widget.List_t = AllocateStructure(List_t)
+    *widget\gadget = ListViewGadget(#PB_Any, x, y, w, h)
+   
+
+    _Set(*widget, #WIDGET_TYPE_LIST, *p, x, y, w, h)
+    _AddItem(*p, *widget)
+    ProcedureReturn *widget
+  EndProcedure
+
 EndModule
 
 
 
 ; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 60
-; FirstLine = 42
-; Folding = DI4Hw
+; CursorPosition = 493
+; FirstLine = 316
+; Folding = DAxH4-
 ; EnableXP

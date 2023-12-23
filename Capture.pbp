@@ -7,24 +7,28 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2023-12-22 20:20" user="graph" host="frapcanim2244"/>
+    <lastopen date="2023-12-23 02:04" user="graph" host="frapcanim2244"/>
   </section>
   <section name="files">
     <file name="Capture.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="808ce03190b9cebe44f4b532a68ecb97"/>
+      <fingerprint md5="dbc82c840bcf3eedb20c38acc63ba192"/>
     </file>
     <file name="Core.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="9b51b44c5d0d1576276abad8c822d00d"/>
+      <fingerprint md5="9b435a735b3fa4700ee8c6de02d292a4"/>
     </file>
     <file name="Image.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="09ceae79f1f81659f86e09b534bae84e"/>
+      <fingerprint md5="926412ffc635b2aaf7af97ce9b12e13f"/>
     </file>
     <file name="Widget.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="9890c9bacd6b9e33f9e34ef5660b3599"/>
+      <fingerprint md5="02323ef5d69331f0e2bf2a974ecbbe56"/>
+    </file>
+    <file name="Win.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="1d31140f633118bf34e1ed7cbdbd84bd"/>
     </file>
   </section>
   <section name="targets">
