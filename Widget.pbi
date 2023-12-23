@@ -308,15 +308,12 @@ Module Widget
   EndProcedure
 
   Procedure Draw(*widget.Widget_t)
-    Define fontId = GetGadgetFont(#PB_Default)
-   Debug "FONT ID : "+Str(fontId)
     If *widget\type >= #WIDGET_TYPE_CONTAINER
       Define *container.Container_t = *widget
       Define c = Bool(*container\state & #WIDGET_STATE_CANVAS)
       If c 
         StartVectorDrawing(CanvasVectorOutput(*container\gadget))
         ResetPath()
-;         VectorFont(fontId, 13)
         AddPathBox(0,0,GadgetWidth(*container\gadget), GadgetHeight(*container\gadget))
         VectorSourceColor(RGBA(Random(128),Random(128),Random(128),Random(255)))
         FillPath()
@@ -504,7 +501,7 @@ EndModule
 
 
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 318
-; FirstLine = 205
+; CursorPosition = 309
+; FirstLine = 206
 ; Folding = DAxH4-
 ; EnableXP
