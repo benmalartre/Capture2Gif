@@ -115,14 +115,19 @@ Module Capture
       *c\rect\w = *r\w
       *c\rect\h = *r\h
     ElseIf hWnd
-      Define rect.RECT
+      Define rect.Rectangle_t
       *c\hWnd = hWnd
-      If GetWindowRect_(hWnd, rect)
-        *c\rect\x = 0
-        *c\rect\y = 0
-        *c\rect\w = rect\right - rect\left
-        *c\rect\h = rect\bottom - rect\top
-      EndIf
+      CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+        If GetWindowRect_(hWnd, rect)
+          *c\rect\x = 0
+          *c\rect\y = 0
+          *c\rect\w = rect\w
+          *c\rect\h = rect\h
+        EndIf
+      CompilerElse
+        
+      CompilerEndIf
+      
     Else
       MessageRequester("Capture", "Fail to Initialize : No valid context !")
     EndIf
@@ -134,18 +139,21 @@ Module Capture
   EndProcedure
   
   Procedure Capture(*c.Capture_t, flipBuffer.b=#True)
-    Define hWnd = *c\hWnd
-    If Not hWnd : hWnd = GetDesktopWindow_() : EndIf 
-    Define srcDC = GetDC_(hWnd)
-    Define dstDC = StartDrawing(ImageOutput(*c\img))
-    If dstDC And srcDC
-      BitBlt_(dstDC,0,0,*c\rect\w,*c\rect\h,srcDC,*c\rect\x,*c\rect\y,#SRCCOPY)
-    EndIf
-    ReleaseDC_(hWnd, srcDC)
-    StopDrawing()
-    
-    If flipBuffer : _FlipBuffer(*c) : Else : _CopyBuffer(*c): EndIf
-    ProcedureReturn
+    CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+      Define hWnd = *c\hWnd
+      If Not hWnd : hWnd = GetDesktopWindow_() : EndIf 
+      Define srcDC = GetDC_(hWnd)
+      Define dstDC = StartDrawing(ImageOutput(*c\img))
+      If dstDC And srcDC
+        BitBlt_(dstDC,0,0,*c\rect\w,*c\rect\h,srcDC,*c\rect\x,*c\rect\y,#SRCCOPY)
+      EndIf
+      ReleaseDC_(hWnd, srcDC)
+      StopDrawing()
+      
+      If flipBuffer : _FlipBuffer(*c) : Else : _CopyBuffer(*c): EndIf
+    CompilerElse
+      
+    CompilerEndIf
   EndProcedure
   
   Procedure Term(*c.Capture_t)
@@ -153,8 +161,7 @@ Module Capture
     If *c\buffer : FreeMemory(*c\buffer) : EndIf
   EndProcedure 
 EndModule
-
-; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 27
+; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
+; CursorPosition = 155
 ; Folding = --
 ; EnableXP

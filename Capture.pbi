@@ -1,5 +1,8 @@
 ﻿
-XIncludeFile "Win.pbi"
+CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+  XIncludeFile "Win.pbi"
+CompilerEndIf
+
 XIncludeFile "Core.pbi"
 XIncludeFile "Widget.pbi"
 ;-----------------------------------------------------------------------------------------------
@@ -200,7 +203,8 @@ Module Scr33nCord3r
 ;     widgets(Str(Widget::GetGadgetId(c1))) = c1
 ;     Widgets(Str(Widget::GetGadgetId(c2))) = c2
 ;     
-    Define hWnd = Win::GetWindowByName("XSIFloatingView")
+    
+;     Define hWnd = Win::GetWindowByName("XSIFloatingView")
       
     Define close = #False
     Define record = #False
@@ -266,8 +270,8 @@ Module Scr33nCord3r
 EndModule
 
 Scr33nCord3r::Launch()
-; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 198
-; FirstLine = 187
+; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
+; CursorPosition = 206
+; FirstLine = 205
 ; Folding = --
 ; EnableXP
