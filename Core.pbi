@@ -24,7 +24,7 @@ DeclareModule Capture
   ;------------------------------------------------------------------------------------------------
   ; IMPORT C FUNCTIONS
   ;------------------------------------------------------------------------------------------------
-  ImportC "gif.lib"
+  ImportC "gif.a"
     AnimatedGif_Init(filename.p-utf8, width.l, height.l, delay.i)
     AnimatedGif_Term(*writer)
     AnimatedGif_AddFrame(*writer, *cs)
@@ -162,6 +162,6 @@ Module Capture
   EndProcedure 
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 155
+; CursorPosition = 26
 ; Folding = --
 ; EnableXP
