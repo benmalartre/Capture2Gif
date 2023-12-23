@@ -1,5 +1,8 @@
 ﻿
-XIncludeFile "Win.pbi"
+CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+  XIncludeFile "Win.pbi"
+CompilerEndIf
+
 XIncludeFile "Core.pbi"
 XIncludeFile "Widget.pbi"
 ;-----------------------------------------------------------------------------------------------
@@ -170,37 +173,38 @@ Module Scr33nCord3r
     
     Define root = Widget::CreateRoot(app\window)
     
-    Define c0 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
-    Define explorer = Widget::CreateExplorer(c0, 10, 10, width-20, 32)
+;     Define c0 =   Widget::CreateContainer(root, 0, 50,width, 50, #False, Widget::#WIDGET_LAYOUT_VERTICAL)
+;     Define explorer = Widget::CreateExplorer(c0, 10, 10, width-20, 32)
   
-;     Define c1 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
-;     Define btn1 = Widget::CreateButton(c1, "Select Region", 10, 10, width-20, 32)
-;     Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 50, width-20, 32)
-;     
-;     Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-;     Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
-;     Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
-;     
+    Define c1 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
+    Define btn1 = Widget::CreateButton(c1, "Select Region", 10, 10, width-20, 32)
+    Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 50, width-20, 32)
+    
+    Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+    Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
+    Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
+    
 ;     Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
 ;     Define lst  = Widget::CreateList(c3, "zob", 0,0,100,100)
-    
 ;     Define check = Widget::CreateCheck(c3, "zob", #True, 120, 10, 32, 32)
+    
     Widget::Resize(root, 0, 0, width, height)
     Widget::Draw(root)
     
-;     Widget::SetState(ico1, Widget::#WIDGET_STATE_TOGGLE)
-;     Widget::SetCallback(btn1, @SelectRectangle(), app)
-;     Widget::SetCallback(btn2, @SelectWindow(), app)
-;     Widget::SetCallback(ico1, @OnPlay(), ico1)
-;     Widget::SetCallback(ico2, @OnStop(), ico2)
+    Widget::SetState(ico1, Widget::#WIDGET_STATE_TOGGLE)
+    Widget::SetCallback(btn1, @SelectRectangle(), app)
+    Widget::SetCallback(btn2, @SelectWindow(), app)
+    Widget::SetCallback(ico1, @OnPlay(), ico1)
+    Widget::SetCallback(ico2, @OnStop(), ico2)
   
     StickyWindow(app\window, #True)
     
     NewMap widgets.i()
-;     widgets(Str(Widget::GetGadgetId(c1))) = c1
-;     Widgets(Str(Widget::GetGadgetId(c2))) = c2
+    widgets(Str(Widget::GetGadgetId(c1))) = c1
+    Widgets(Str(Widget::GetGadgetId(c2))) = c2
 ;     
-    Define hWnd = Win::GetWindowByName("XSIFloatingView")
+    
+;     Define hWnd = Win::GetWindowByName("XSIFloatingView")
       
     Define close = #False
     Define record = #False
@@ -266,8 +270,8 @@ Module Scr33nCord3r
 EndModule
 
 Scr33nCord3r::Launch()
-; IDE Options = PureBasic 5.73 LTS (Windows - x64)
-; CursorPosition = 198
-; FirstLine = 187
+; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
+; CursorPosition = 200
+; FirstLine = 173
 ; Folding = --
 ; EnableXP
