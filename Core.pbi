@@ -129,18 +129,18 @@ Module Capture
           *c\rect\h = rect\h
         EndIf
       CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
-        Define frame.CGRect
-  
-        CocoaMessage(@frame, hWnd, "frame")
-        
-        frame\origin\x = 100
-        ; this will be from bottom of screen!
-        ; correct calculation: ScreenHeight() - WindowHeight() - 100
-        frame\origin\y = 100
-        frame\size\width = 200
-        frame\size\height = 300
-        
-        CocoaMessage(0, CocoaMessage(0, hWnd, "animator"), "setFrame:@", @frame, "display:", #YES) 
+;         Define frame.CGRect
+;   
+;         CocoaMessage(@frame, hWnd, "frame")
+;         
+;         frame\origin\x = 100
+;         ; this will be from bottom of screen!
+;         ; correct calculation: ScreenHeight() - WindowHeight() - 100
+;         frame\origin\y = 100
+;         frame\size\width = 200
+;         frame\size\height = 300
+;         
+;         CocoaMessage(0, CocoaMessage(0, hWnd, "animator"), "setFrame:@", @frame, "display:", #YES) 
   
       CompilerEndIf
       
@@ -178,7 +178,7 @@ Module Capture
   EndProcedure 
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 30
-; FirstLine = 6
+; CursorPosition = 142
+; FirstLine = 123
 ; Folding = --
 ; EnableXP

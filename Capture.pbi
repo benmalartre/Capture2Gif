@@ -8,6 +8,7 @@ XIncludeFile "Widget.pbi"
 ;-----------------------------------------------------------------------------------------------
 DeclareModule Scr33nCord3r
   UseModule Capture
+  #APP_NAME = "Scr33nC0rd3r"
   #RECTANGLE_THICKNESS = 2
   
   Enumeration
@@ -21,14 +22,13 @@ DeclareModule Scr33nCord3r
     capture.Capture::Capture_t
     outputFolder.s
     outputFilename.s
-    frame.i
     delay.i
     record.b
     *writer
     hWnd.i
   EndStructure
 
-  Declare GetRectangle(*rect.Rectangle_t, hwnd=#Null)
+  Declare GetRectangle(*app.App_t, *rect.Rectangle_t)
   Declare SelectWindow(*app.App_t)
   Declare SelectRectangle(*app.App_t)
   
@@ -39,77 +39,70 @@ DeclareModule Scr33nCord3r
 EndDeclareModule
 
 
+
 ;-----------------------------------------------------------------------------------------------
 ; Scr33nCord3r Implementation
 ;-----------------------------------------------------------------------------------------------
 Module Scr33nCord3r
   UseModule Capture
-  Procedure GetRectangle(*rect.Rectangle_t, hwnd=#Null)
-    If InitSprite() = 0
-      MessageRequester("Error", "Can't open hardware acceleration", 0)
-      End
-    EndIf
-    
+
+  Procedure GetRectangle(*app.App_t, *rect.Rectangle_t)
     ExamineDesktops()
-    Define width = DesktopWidth(0)
-    Define height = DesktopHeight(0)
-    Define rect.Rectangle_t 
-    rect\y = 0
-    rect\x = 0
-    rect\w = width
-    rect\h = height
+
+    *rect\y = 0
+    *rect\x = 0
+    *rect\w = DesktopWidth(0)
+    *rect\h = DesktopHeight(0)
     
     Define background.Capture_t
-    Init(background, rect, hwnd)
+    Init(background, *rect, hwnd)
     Capture(background, #False)
     
-    Define screen = OpenScreen(width, height,32, "Capture") 
-    If Not screen
-      MessageRequester("Error", "Impossible to open a "+Str(width)+"*"+Str(height)+" 32-bit screen",0)
-      End
-    EndIf
-  
-    Define sprite = CreateSprite(#PB_Any,width,height)
-    StartDrawing(SpriteOutput(sprite))
-    DrawingMode(#PB_2DDrawing_AllChannels)
-    DrawImage(ImageID(background\img), 0,0, width, height)
-    StopDrawing()
-    Capture::Term(background)
     
     Define startX.i, startY.i, endX.i, endY.i
     startX = DesktopMouseX()
     startY = DesktopMouseY()
-    MouseLocate(startX, startY)
     Define drag = #False
     Define drop = #False
-    Define color = RGB(255,128,0)
-    
+    Define color = RGBA(255,128,0, 222)
+    Define flags = #PB_Window_Maximize|#PB_Window_BorderLess|#PB_Window_Invisible
+    Define window = OpenWindow(#PB_Any, *rect\x, *rect\y, *rect\w, *rect\h, "background", flags)    
+    Debug window
+    Define canvas = CanvasGadget(#PB_Any, *rect\x, *rect\y,  *rect\w, *rect\h, #PB_Canvas_Keyboard)
+    Win::EnterWindowFullscreen(window)
+    HideWindow(window, #False)
     Repeat
-      FlipBuffers()                        ; Flip for DoubleBuffering
-      ClearScreen(RGB(0,0,0))              ; CleanScreen, black
-    
-      ExamineKeyboard()
-      ExamineMouse()                      
+      event = WaitWindowEvent()
+      If EventWindow() <> window : Continue : EndIf
       
-      If drag : endX = MouseX() : endY = MouseY() 
-      Else : startX = MouseX() : startY = MouseY() : EndIf
+      eventType = EventType()      
+      
+      If drag : endX = DesktopMouseX() : endY = DesktopMouseY() 
+      Else : startX = DesktopMouseX() : startY = DesktopMouseY() : EndIf
     
-      DisplaySprite(sprite, 0,0)
-      StartDrawing(ScreenOutput())
+    StartVectorDrawing(CanvasVectorOutput(canvas))
+      DrawVectorImage(ImageID(background\img))
       If drag
-        Box(startX, startY - #RECTANGLE_THICKNESS * 0.5, endX - startX, #RECTANGLE_THICKNESS, color)
-        Box(startX, endY - #RECTANGLE_THICKNESS * 0.5, endX - startX, #RECTANGLE_THICKNESS, color)
-        Box(startX - #RECTANGLE_THICKNESS * 0.5, startY, #RECTANGLE_THICKNESS, endY - startY, color)
-        Box(endX - #RECTANGLE_THICKNESS * 0.5, startY, #RECTANGLE_THICKNESS, endY - startY, color)
+        MovePathCursor(startX, startY)
+        AddPathLine(endX, startY)
+        AddPathLine(endX, endY)
+        AddPathLine(startX, endY)
+        ClosePath()
+        
+        VectorSourceColor(color)
+        StrokePath(8)
+       
       Else
-        Box(startX - 12, startY -#RECTANGLE_THICKNESS * 0.5, 24, #RECTANGLE_THICKNESS, color)
-        Box(startX - #RECTANGLE_THICKNESS * 0.5, startY - 12, #RECTANGLE_THICKNESS, 24, color)
+;         Box(startX - 12, startY -#RECTANGLE_THICKNESS * 0.5, 24, #RECTANGLE_THICKNESS, color)
+;         Box(startX - #RECTANGLE_THICKNESS * 0.5, startY - 12, #RECTANGLE_THICKNESS, 24, color)
       EndIf
-      StopDrawing()
+      StopVectorDrawing()
       
-      If MouseButton(#PB_MouseButton_Left) 
+      If eventType = #PB_EventType_LeftButtonDown
+        Debug "LBD"
         drag = #True
-      ElseIf drag
+      ElseIf drag And eventType = #PB_EventType_LeftButtonUp
+        Debug "LBU"
         drop = #True
       EndIf
     
@@ -124,8 +117,12 @@ Module Scr33nCord3r
     *rect\h = endY - startY
     If *rect\w % 4 : *rect\w + ( 4 - *rect\w  % 4 ) : EndIf
     If *rect\h % 4 : *rect\h + ( 4 - *rect\h  % 4 ) : EndIf
-  
-    CloseScreen()
+    
+
+    CloseWindow(window)
+    SetActiveWindow(*app\window)
+    Capture::Term(background)
+       
   EndProcedure
   
   Procedure SelectRectangle(*app.App_t)
@@ -133,7 +130,7 @@ Module Scr33nCord3r
 
     StickyWindow(*app\window, #False)
     If Not *app\hWnd
-      Scr33nCord3r::GetRectangle(rect)
+      Scr33nCord3r::GetRectangle(*app, rect)
       Capture::Init(*app\capture, rect, #Null)
     Else 
       Capture::Init(*app\capture, #Null, *app\hWnd)
@@ -163,7 +160,7 @@ Module Scr33nCord3r
                              200,
                              width,
                              height,
-                             "Scr33nC0rd3r", 
+                             #APP_NAME, 
                              #PB_Window_SystemMenu|
                              #PB_Window_SizeGadget)
     
@@ -239,7 +236,6 @@ Module Scr33nCord3r
         SetWindowColor(app\window, RGB(0,64,255))
         Capture::Capture(app\capture, #True)
         AnimatedGif_AddFrame(app\writer, app\capture\buffer)
-        app\frame + 1
         Delay(app\delay)
       Else
         SetWindowColor(app\window, RGB(128,128,128))
@@ -274,7 +270,7 @@ EndModule
 
 Scr33nCord3r::Launch()
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 263
-; FirstLine = 241
+; CursorPosition = 92
+; FirstLine = 60
 ; Folding = --
 ; EnableXP
