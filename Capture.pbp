@@ -7,16 +7,16 @@
   <section name="data">
     <explorer view="C:/ProgramData/PureBasic/Examples/" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2023-12-23 13:55" user="malartrebenjamin" host="macbook-pro-de-malartre.local"/>
+    <lastopen date="2023-12-24 22:57" user="malartrebenjamin" host="macbook-pro-de-malartre.local"/>
   </section>
   <section name="files">
     <file name="Capture.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="8b050aefb74be33a23f1f8723dbdb0d4"/>
+      <fingerprint md5="a6c241d7e313bc5f2f1c7fa92ec090c9"/>
     </file>
     <file name="Core.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="1dbd630bd609a21e66efcb2a3b0037c8"/>
+      <fingerprint md5="a3d7f161a71267dcf67eb39e88863912"/>
     </file>
     <file name="Image.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
@@ -28,7 +28,7 @@
     </file>
     <file name="Win.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="16755e6f81b30e4c0db648361804b762"/>
+      <fingerprint md5="3bb9ef81bfa2143f7dea03ef281ec4c5"/>
     </file>
   </section>
   <section name="targets">
