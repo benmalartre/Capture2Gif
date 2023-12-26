@@ -11,7 +11,10 @@
     Map childrens.i()
   EndStructure
   
+  Declare GetWindowID(window)
+  Declare GetWindowById(id.i)
   Declare GetWindowByName(name.s="Softimage")
+  Declare GetWindowRect(window.i, *rect.Rectangle_t)
   Declare EnsureCaptureAccess()
   Declare CaptureWindowImage(img.i, window.i,*rect.Rectangle_t=#Null)
   Declare CaptureDesktopImage(img.i, *rect.Rectangle_t)
@@ -46,23 +49,26 @@
       CGMainDisplayID()
       CGWindowListCreate(_1, _2)
       CGWindowListCreateDescriptionFromArray(arr)
+      CFArrayCreate(allocator, values, numValues, callBacks)
       CFArrayGetCount(arr)
       CFArrayGetValueAtIndex(arr, index)
       CFRelease(arr)
       CFDictionaryGetValue(_1,_2)
       CFStringCreateWithCharacters(alloc,text.p-Unicode,len)
       CFNumberGetValue(_1,_2,_3)
-      CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
-  CompilerEndIf
+      CGWindowListCopyWindowInfo(options, window)
+      CGRectMakeWithDictionaryRepresentation(desc, *rect.Rectangle_t)
     EndImport
-  
   CompilerEndIf
-  
-  
 EndDeclareModule
 
 Module Platform
   CompilerIf #PB_Compiler_OS = #PB_OS_Windows
+    ; get window id
+    Procedure GetWindowID(window.i)
+    ProcedureReturn WindowID(window)
+    EndProcedure
+    
     ; grand screen access for recording (unused on windows)
     Procedure EnsureCaptureAccess()
     EndProcedure
@@ -107,7 +113,6 @@ Module Platform
     _EnumerateWindows(window)
     ForEach window\childrens()
       If FindString(MapKey(window\childrens()), name)
-        Debug "found xsi view"
         ProcedureReturn window\childrens()
       EndIf
     Next 
@@ -121,6 +126,11 @@ Module Platform
     *window\childrens() = hWnd
     ProcedureReturn #True
   EndProcedure 
+  
+  ; get window rectangle
+  Procedure GetWindowRect(window, *rect.Rectangle_t)
+    GetWindowRect_(window, *rect)
+  EndProcedure
   
   Procedure EnumerateChildWindows(*window.Window_t, pWnd)
     EnumChildWindows_(pWnd,@_EnumChildWindowsProc(), *window)
@@ -141,6 +151,11 @@ Module Platform
   EndProcedure
 
 CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
+  ; get window core graphic id
+  Procedure GetWindowID(window)
+    ProcedureReturn CocoaMessage(0, WindowID(window), "windowNumber")
+  EndProcedure
+  
   ; grand screen access for recording
   Procedure EnsureCaptureAccess()
     If Not CGPreflightScreenCaptureAccess()
@@ -224,32 +239,76 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     CGImageRelease(nsImage)
     CGImageRelease(cgImage)
   EndProcedure
-    
+  
+  Procedure.s _PeekNSString(string)
+    ProcedureReturn PeekS(CocoaMessage(0, string, "UTF8String"), -1, #PB_UTF8)
+  EndProcedure
   ; try get a window by it's name
   ;
   Procedure GetWindowByName(name.s="Softimage")
-    ;CFArrayRef
     Define windows = CGWindowListCreate(#CGWindowListOptionOnScreenOnly, 0)
-    Debug windows
     Define descriptions = CGWindowListCreateDescriptionFromArray(windows)
-    Debug descriptions
-    Debug "--------------"
+
     If descriptions
       count = CFArrayGetCount(descriptions)
-      If count
-        For i = 0 To count-1
-          id = CFArrayGetValueAtIndex(descriptions,i)
-          Debug "ID: "+id
-          pid_num = CFDictionaryGetValue(id, CFStringCreateWithCharacters(0,"kCGWindowOwnerPID",17))
-          If pid_num
-            CFNumberGetValue(pid_num,9,@pid.l)
-            Debug "PID: "+pid
-          EndIf
-        Next
-      EndIf
+      For i = 0 To count-1
+        desc = CFArrayGetValueAtIndex(descriptions,i)
+        windowName = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0,"kCGWindowName",13))
+              
+        If FindString(_PeekNSString(windowName), name)
+          Debug "Found Window : "+_PeekNSString(windowName)
+          Define bounds = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0,"kCGWindowBounds",15))        
+          Define window =  CFArrayGetValueAtIndex(windows,i)
+          CFRelease(descriptions)
+          CFRelease(windows)
+          ProcedureReturn window
+        EndIf
+      Next
+
     EndIf
     CFRelease(descriptions)
     CFRelease(windows)
+    ProcedureReturn #Null
+  EndProcedure
+  
+  Procedure GetWindowById(id.i)
+    Define windows = CGWindowListCreate(#CGWindowListOptionAll, 0)
+    Define descriptions = CGWindowListCreateDescriptionFromArray(windows)
+
+    count = CFArrayGetCount(descriptions)
+    For i = 0 To count-1
+      desc = CFArrayGetValueAtIndex(descriptions,i)
+      windowId = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0,"kCGWindowNumber",15))
+      CFNumberGetValue(windowId, 5, @cid)
+
+      If cid = id
+        Define window =  CFArrayGetValueAtIndex(windows,i)
+        CFRelease(descriptions)
+        CFRelease(windows)
+        ProcedureReturn window
+      EndIf
+    Next
+
+    CFRelease(descriptions)
+    CFRelease(windows)
+    ProcedureReturn #Null
+  EndProcedure
+  
+  ; get window rectangle
+  Procedure GetWindowRect(window, *rect.Rectangle_t)
+    Define windows = CFArrayCreate(0, @window, 1, 0)
+    Define descriptions = CGWindowListCreateDescriptionFromArray(windows)
+    
+    Define rect.NSRect
+    Define desc = CFArrayGetValueAtIndex(descriptions, 0)
+    Define bounds = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0,"kCGWindowBounds",15))
+    CGRectMakeWithDictionaryRepresentation(bounds, @rect)
+
+    *rect\x = rect\origin\x
+    *rect\y = rect\origin\y
+    *rect\w = rect\size\width
+    *rect\h = rect\size\height
+
     
   EndProcedure
   
@@ -275,7 +334,7 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
 CompilerEndIf
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 81
-; FirstLine = 52
-; Folding = ----
+; CursorPosition = 68
+; FirstLine = 49
+; Folding = -----
 ; EnableXP

@@ -4,7 +4,6 @@
 ;------------------------------------------------------------------------------------------------
 DeclareModule Capture
 
- 
   Structure Capture_t
     rect.Platform::Rectangle_t
     hWnd.i
@@ -90,18 +89,7 @@ Module Capture
       CopyMemory(*r, *c\rect, SizeOf(Platform::Rectangle_t))
       
     ElseIf hWnd
-      CompilerIf #PB_Compiler_OS = #PB_OS_Windows
-        Define rect.Rectangle_t
-        
-        If GetWindowRect_(hWnd, rect)
-          *c\rect\x = 0
-          *c\rect\y = 0
-          *c\rect\w = rect\w
-          *c\rect\h = rect\h
-        EndIf
-      CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
-        
-      CompilerEndIf
+      Platform::GetWindowRect(hWnd, *c\rect)
     EndIf
     
     If *c\rect\w > 0 And *c\rect\h > 0
@@ -121,7 +109,7 @@ Module Capture
   
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 105
-; FirstLine = 76
+; CursorPosition = 91
+; FirstLine = 64
 ; Folding = --
 ; EnableXP
