@@ -41,22 +41,27 @@
     #CGWindowListOptionIncludingWindow        = 1 << 3
     #CGWindowListExcludeDesktopElements       = 1 << 4   
     
+    #CGWindowImageBoundsIgnoreFraming         = 1 << 0
+    
     ImportC ""
       CGPreflightScreenCaptureAccess()
       CGRequestScreenCaptureAccess()
-      CGDisplayCreateImage(displayId.i)
-      CGImageRelease(image)
       CGMainDisplayID()
-      CGWindowListCreate(_1, _2)
+      CGDisplayCreateImage(display)
+      CGImageGetHeight(image)
+      CGImageGetWidth(image)
+      CGImageRelease(image)
+      CGWindowListCreate(options, window)
       CGWindowListCreateDescriptionFromArray(arr)
+      CGWindowListCreateImage(x.CGFloat, y.CGFloat, w.CGFloat, h.CGFloat, windowOption, windowID, imageOption)
+
       CFArrayCreate(allocator, values, numValues, callBacks)
       CFArrayGetCount(arr)
       CFArrayGetValueAtIndex(arr, index)
       CFRelease(arr)
-      CFDictionaryGetValue(_1,_2)
+      CFDictionaryGetValue(dict,key)
       CFStringCreateWithCharacters(alloc,text.p-Unicode,len)
-      CFNumberGetValue(_1,_2,_3)
-      CGWindowListCopyWindowInfo(options, window)
+      CFNumberGetValue(number,type,*value)
       CGRectMakeWithDictionaryRepresentation(desc, *rect.Rectangle_t)
     EndImport
   CompilerEndIf
@@ -66,7 +71,7 @@ Module Platform
   CompilerIf #PB_Compiler_OS = #PB_OS_Windows
     ; get window id
     Procedure GetWindowID(window.i)
-    ProcedureReturn WindowID(window)
+      ProcedureReturn WindowID(window)
     EndProcedure
     
     ; grand screen access for recording (unused on windows)
@@ -74,8 +79,7 @@ Module Platform
     EndProcedure
     
    ; helper function to capture window image
-   Procedure CaptureWindowImage(img.i, window.i=#Null, *rect.Rectangle_t=#Null)
-      If Not window : window = GetDesktopWindow_() : EndIf 
+   Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
       Define srcDC = GetDC_(window)
       Define dstDC = StartDrawing(ImageOutput(img))
       If dstDC And srcDC
@@ -88,7 +92,7 @@ Module Platform
     ; helper function to capture desktop image
    Procedure CaptureDesktopImage(img.i, *rect.Rectangle_t)
      Define window = GetDesktopWindow_() 
-     CaptureWindowImage(img.i, window.i, *rect)
+     CaptureWindowImage(img.i, window, *rect)
     EndProcedure
     
   ; helper function to enumerate open windows
@@ -164,65 +168,53 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   EndProcedure
     
   ; helper function to capture window image
+  ; null rect will capture the whole window
+  ; rect coordinates a to be in screen space
   Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
-;     
-;     Define cgImage, nsImage, srcRect.NSRect, dstRect.NSRect, size.NSSize
-;     If Not window : window = CGMainDisplayID() : EndIf
-;     ; grab full screen image
-;     ExamineDesktops()
-;     size\width = DesktopWidth(0)
-;     size\height = DesktopHeight(0)
-;     
-;     Debug size\width
-;     Debug size\height
-;     
-;     
-; 
-;     cgImage = CGDisplayCreateImage(window)
-;     nsImage = CocoaMessage(0, CocoaMessage(0, 0, "NSImage alloc"), 
-;                            "initWithCGImage:", cgImage, "size:@", @size)
-;     
-;     ; extract rectangle region
-;     Protected delta.CGFloat = 1.0 
-;     
-;     srcRect\origin\x = *c\rect\x
-;     srcRect\origin\y = DesktopHeight(0) - (*c\rect\y + *c\rect\h)
-;     srcRect\size\width = *c\rect\w
-;     srcRect\size\height = *c\rect\h
-;     
-;     dstRect\origin\x = 0
-;     dstRect\origin\y = 0
-;     dstRect\size\width = *c\rect\w
-;     dstRect\size\height = *c\rect\h
-; 
-;     StartDrawing(ImageOutput(*c\img))
-;     CocoaMessage(0, nsImage, "drawInRect:@", @dstRect, "fromRect:@", @srcRect, 
-;                  "operation:", #NSCompositeSourceOver, "fraction:@", @delta)
-;     StopDrawing()
-;     
-;     CGImageRelease(nsImage)
-;     CGImageRelease(cgImage)
+    Protected cgImage, rect.NSRect
+    If *rect
+      cgImage = CGWindowListCreateImage(*rect\x, *rect\y, *rect\w, *rect\h, 8, window, 1)
+    Else
+      cgImage = CGWindowListCreateImage(0, 0, 0, 0, 8, window, 1)
+    EndIf
+    
+    Define size.NSSize
+    size\width = CGImageGetWidth(cgImage)
+    size\height = CGImageGetHeight(cgImage)
+    
+    nsImage = CocoaMessage(0, CocoaMessage(0, 0, "NSImage alloc"), 
+                           "initWithCGImage:", cgImage, "size:@", @size)
+    CGImageRelease(cgImage)
+    
+    rect\origin\x = 0
+    rect\origin\y = 0
+    rect\size\width = ImageWidth(img)
+    rect\size\height = ImageHeight(img)
+
+    StartDrawing(ImageOutput(img))
+    CocoaMessage(0, nsImage, "drawInRect:@", @rect)
+    StopDrawing()
+    
+    CGImageRelease(nsImage)
   EndProcedure
   
   ; helper function to capture desktop image
   Procedure CaptureDesktopImage(img.i, *rect.Rectangle_t)
     
-    Define cgImage, nsImage, srcRect.NSRect, dstRect.NSRect, size.NSSize
+    Define cgImage, nsImage, srcRect.NSRect, dstRect.NSRect, desktopRect.NSRect
 
     ; grab full screen image
-    ExamineDesktops()
-    size\width = DesktopWidth(0)
-    size\height = DesktopHeight(0)
+    CocoaMessage(@desktopRect, CocoaMessage(0, 0, "NSScreen mainScreen"), "frame")
     
     cgImage = CGDisplayCreateImage(CGMainDisplayID())
     nsImage = CocoaMessage(0, CocoaMessage(0, 0, "NSImage alloc"), 
-                           "initWithCGImage:", cgImage, "size:@", @size)
+                           "initWithCGImage:", cgImage, "size:@", @desktopRect\size)
     
     ; extract rectangle region
     Protected delta.CGFloat = 1.0 
     
     srcRect\origin\x = *rect\x
-    srcRect\origin\y = DesktopHeight(0) - (*rect\y + *rect\h)
+    srcRect\origin\y = desktopRect\size\height - (*rect\y + *rect\h)
     srcRect\size\width = *rect\w
     srcRect\size\height = *rect\h
     
@@ -299,7 +291,7 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     Define windows = CFArrayCreate(0, @window, 1, 0)
     Define descriptions = CGWindowListCreateDescriptionFromArray(windows)
     
-    Define rect.NSRect
+    Define rect.CGRect
     Define desc = CFArrayGetValueAtIndex(descriptions, 0)
     Define bounds = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0,"kCGWindowBounds",15))
     CGRectMakeWithDictionaryRepresentation(bounds, @rect)
@@ -308,7 +300,6 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     *rect\y = rect\origin\y
     *rect\w = rect\size\width
     *rect\h = rect\size\height
-
     
   EndProcedure
   
@@ -334,7 +325,7 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
 CompilerEndIf
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 68
-; FirstLine = 49
+; CursorPosition = 194
+; FirstLine = 173
 ; Folding = -----
 ; EnableXP
