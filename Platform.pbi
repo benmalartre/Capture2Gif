@@ -140,7 +140,7 @@ Module Platform
     EnumChildWindows_(pWnd,@_EnumChildWindowsProc(), *window)
   EndProcedure 
   
-  ;--[ Window fullscreen procedures ]----------------------------------------------------------------
+  ; fullscreen
 
   Procedure EnterWindowFullscreen(window)
     Protected hWnd = WindowID(window)
@@ -160,7 +160,7 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     ProcedureReturn CocoaMessage(0, WindowID(window), "windowNumber")
   EndProcedure
   
-  ; grand screen access for recording
+  ; request screen access for recording
   Procedure EnsureCaptureAccess()
     If Not CGPreflightScreenCaptureAccess()
       CGRequestScreenCaptureAccess()       
@@ -168,8 +168,8 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   EndProcedure
     
   ; helper function to capture window image
+  ; rect coordinates are in screen space
   ; null rect will capture the whole window
-  ; rect coordinates a to be in screen space
   Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
     Protected cgImage, rect.NSRect
     If *rect
@@ -232,9 +232,11 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     CGImageRelease(cgImage)
   EndProcedure
   
+  ; helper to get cocoa string value
   Procedure.s _PeekNSString(string)
     ProcedureReturn PeekS(CocoaMessage(0, string, "UTF8String"), -1, #PB_UTF8)
   EndProcedure
+  
   ; try get a window by it's name
   ;
   Procedure GetWindowByName(name.s="Softimage")
@@ -248,7 +250,6 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
         windowName = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0,"kCGWindowName",13))
               
         If FindString(_PeekNSString(windowName), name)
-          Debug "Found Window : "+_PeekNSString(windowName)
           Define bounds = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0,"kCGWindowBounds",15))        
           Define window =  CFArrayGetValueAtIndex(windows,i)
           CFRelease(descriptions)
@@ -325,7 +326,7 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
 CompilerEndIf
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 194
-; FirstLine = 173
+; CursorPosition = 145
+; FirstLine = 135
 ; Folding = -----
 ; EnableXP

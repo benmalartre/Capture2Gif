@@ -85,9 +85,8 @@ Module Capture
   
   Procedure Init(*c.Capture_t, *r.Platform::Rectangle_t, hWnd=#Null)   
     *c\hWnd =  hWnd
-    If *r
+    If *r 
       CopyMemory(*r, *c\rect, SizeOf(Platform::Rectangle_t))
-      
     ElseIf hWnd
       Platform::GetWindowRect(hWnd, *c\rect)
     EndIf
@@ -98,7 +97,12 @@ Module Capture
   EndProcedure
   
   Procedure Frame(*c.Capture_t, flipBuffer.b=#True)
-    Platform::CaptureDesktopImage(*c\img, *c\rect)
+    If *c\hWnd
+      Platform::CaptureWindowImage(*c\img, *c\hWnd, *c\rect)
+    Else
+      Platform::CaptureDesktopImage(*c\img, *c\rect)
+    EndIf
+    
     If flipBuffer : _FlipBuffer(*c) : EndIf
   EndProcedure
   
@@ -109,7 +113,7 @@ Module Capture
   
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 91
-; FirstLine = 64
+; CursorPosition = 88
+; FirstLine = 69
 ; Folding = --
 ; EnableXP

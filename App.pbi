@@ -43,7 +43,6 @@ Module ScreenCaptureToGif
   Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
     ExamineDesktops()
     
-      
     ; first capture desktop framebuffer
     Define background.Capture_t
     Define rect.Platform::Rectangle_t
@@ -52,7 +51,7 @@ Module ScreenCaptureToGif
     rect\w = DesktopWidth(0)
     rect\h = DesktopHeight(0)
     
-    Capture::Init(background, rect, hwnd)
+    Capture::Init(background, rect)
     Capture::Frame(background, #False)
     
     ; then open a fullscreen window
@@ -122,14 +121,10 @@ Module ScreenCaptureToGif
   
   Procedure SelectRectangle(*app.App_t)
     StickyWindow(*app\window, #False)
-    If Not *app\hWnd
-      Define rect.Platform::Rectangle_t
-      ScreenCaptureToGif::GetRectangle(*app, rect)
-      Capture::Init(*app\capture, rect, #Null)
-    Else 
-      Capture::Init(*app\capture, #Null, *app\hWnd)
-    EndIf
-    
+    Define rect.Platform::Rectangle_t
+    ScreenCaptureToGif::GetRectangle(*app, rect)
+    Capture::Init(*app\capture, rect, *app\hWnd)
+   
     *app\writer = Capture::AnimatedGif_Init( *app\outputFolder+"/"+*app\outputFilename+".gif", 
                                             *app\capture\rect\w, *app\capture\rect\h, *app\delay)
     StickyWindow(*app\window, #True)
@@ -142,7 +137,7 @@ Module ScreenCaptureToGif
   
   Procedure Launch()
     Define app.App_t
-    app\delay = 5
+    app\delay = 50
     app\record = #False
     app\close = #False
     app\outputFilename = "image"
@@ -177,8 +172,8 @@ Module ScreenCaptureToGif
     Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 50, width-20, 32)
     
     Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-    Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32)
-    Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32)
+    Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32, RGBA(20,220, 20, 255))
+    Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32, RGBA(220, 60, 20, 255))
     
 ;     Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
 ;     Define lst  = Widget::CreateList(c3, "zob", 0,0,100,100)
@@ -209,6 +204,7 @@ Module ScreenCaptureToGif
   
         If FindMapElement(widgets(), Str(gadget))
           Widget::OnEvent(widgets())
+          Widget::Draw(root)
         EndIf
         
       ElseIf event = #PB_Event_SizeWindow
@@ -253,7 +249,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 169
-; FirstLine = 165
-; Folding = v9
+; CursorPosition = 186
+; FirstLine = 188
+; Folding = v0
 ; EnableXP

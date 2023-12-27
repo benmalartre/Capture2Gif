@@ -4,13 +4,13 @@
 DeclareModule Widget
   Enumeration
     #WIDGET_STATE_DEFAULT  = 0
-    #WIDGET_STATE_ACTIVE   = 1
-    #WIDGET_STATE_DISBALE  = 2
-    #WIDGET_STATE_HOVER    = 4
-    #WIDGET_STATE_PRESS    = 8
-    #WIDGET_STATE_TOGGLE   = 16
-    #WIDGET_STATE_ROOT     = 32
-    #WIDGET_STATE_CANVAS   = 64
+    #WIDGET_STATE_ACTIVE   = 1 << 0
+    #WIDGET_STATE_DISBALE  = 1 << 1
+    #WIDGET_STATE_HOVER    = 1 << 2
+    #WIDGET_STATE_PRESS    = 1 << 3
+    #WIDGET_STATE_TOGGLE   = 1 << 4
+    #WIDGET_STATE_ROOT     = 1 << 5
+    #WIDGET_STATE_CANVAS   = 1 << 6
   EndEnumeration
   
   Enumeration
@@ -27,13 +27,23 @@ DeclareModule Widget
   EndEnumeration
   
   Enumeration
+    #WIDGET_ALIGN_TOP     = 1 << 0
+    #WIDGET_ALIGN_BOTTOM  = 1 << 1
+    #WIDGET_ALIGN_LEFT    = 1 << 2
+    #WIDGET_ALIGN_RIGHT   = 1 << 3
+  EndEnumeration
+  
+  Enumeration
     #WIDGET_LAYOUT_HORIZONTAL
     #WIDGET_LAYOUT_VERTICAL
     #WIDGET_LAYOUT_GRID
   EndEnumeration
   
-  #WIDGET_PADDING_X = 6
-  #WIDGET_PADDING_Y = 6
+  #WIDGET_PADDING_X     = 6
+  #WIDGET_PADDING_Y     = 6
+  #WIDGET_STROKE_WIDTH  = 4
+  
+  Global BACKGROUND_COLOR = RGBA(120, 120, 120, 255)
   
   Prototype CallbackFn(*data=#Null)
   
@@ -60,6 +70,7 @@ DeclareModule Widget
     *active.Widget_t
     gadget.i
     layout.i
+    color.i
   EndStructure
   
   Structure Text_t Extends Widget_t
@@ -84,6 +95,7 @@ DeclareModule Widget
     iy.i
     iw.i
     ih.i
+    color.i
   EndStructure
   
   Structure Check_t Extends Widget_t
@@ -97,7 +109,7 @@ DeclareModule Widget
   Declare CreateRoot(window.i)
   Declare CreateContainer(*p.Widget_t, x.i, y.i, w.i, h.i, c.b=#False, l=#WIDGET_LAYOUT_VERTICAL)
   Declare CreateButton(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
-  Declare CreateIcon(*p.Container_t, icon.s, x.i, y.i, w.i, h.i)
+  Declare CreateIcon(*p.Container_t, icon.s, x.i, y.i, w.i, h.i, c.i)
   Declare CreateText(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
   Declare CreateExplorer(*p.Container_t, x.i, y.i, w.i, h.i)
   Declare CreateString(*p.Container_t, x.i, y.i, w.i, h.i)
@@ -315,7 +327,7 @@ Module Widget
         StartVectorDrawing(CanvasVectorOutput(*container\gadget))
         ResetPath()
         AddPathBox(0,0,GadgetWidth(*container\gadget), GadgetHeight(*container\gadget))
-        VectorSourceColor(RGBA(Random(128),Random(128),Random(128),Random(255)))
+        VectorSourceColor(*container\color)
         FillPath()
         _GetWidgetUnderMouse(*widget)
       EndIf
@@ -336,27 +348,26 @@ Module Widget
           
           
           VectorSourceColor(RGBA(55, 55, 55, 122))
-          StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd)
-          MovePathCursor(*widget\x + *widget\width/2-*icon\iw/2, *widget\y, #PB_Path_Relative)
+          StrokePath(#WIDGET_STROKE_WIDTH, #PB_Path_RoundCorner|#PB_Path_RoundEnd)
+          MovePathCursor(*widget\x + *widget\width/2-*icon\iw/2, *widget\y + *widget\height/2-*icon\ih/2, #PB_Path_Relative)
 
           AddPathSegments(*icon\icon, #PB_Path_Relative )
-          VectorSourceColor(RGBA(55, 55, 55, 22))
-          StrokePath(8, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
-          VectorSourceColor(RGBA(255, 255, 255, 120))
-          StrokePath(2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve)
-          VectorSourceColor(RGBA(Random(255),Random(255),25,255))
-          FillPath(#PB_Path_Preserve)
           
           If Widget::GetState(*icon, #WIDGET_STATE_HOVER)
-            VectorSourceColor(RGBA(155,25,25,255))
+            VectorSourceColor(RGBA(Red(*icon\color) + 25, Green(*icon\color) + 25, Blue(*icon\color) + 25, 150))
           Else
-            If Widget::GetState(*icon, #WIDGET_STATE_ACTIVE)
-              VectorSourceColor(RGBA(25,125,25,255))
-            Else
-              VectorSourceColor(RGBA(125,125,25,255))
-              EndIf
+            VectorSourceColor(RGBA(Red(*icon\color), Green(*icon\color), Blue(*icon\color), 100))
           EndIf
-       
+
+          StrokePath(#WIDGET_STROKE_WIDTH, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve) 
+          
+          If Widget::GetState(*icon, #WIDGET_STATE_ACTIVE)
+            VectorSourceColor(RGBA(255, 255, 255, 200))
+            StrokePath(#WIDGET_STROKE_WIDTH/2, #PB_Path_RoundCorner|#PB_Path_RoundEnd|#PB_Path_Preserve) 
+          EndIf
+          
+          
+          VectorSourceColor(*icon\color)
           FillPath()
           
         Case #WIDGET_TYPE_BUTTON
@@ -428,6 +439,7 @@ Module Widget
     EndIf
     *widget\layout = l
     *widget\hovered = #Null
+    *widget\color = BACKGROUND_COLOR
     ProcedureReturn *widget
   EndProcedure
   
@@ -439,7 +451,7 @@ Module Widget
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure CreateIcon(*p.Container_t, icon.s, x.i, y.i, w.i, h.i)
+  Procedure CreateIcon(*p.Container_t, icon.s, x.i, y.i, w.i, h.i, c.i)
     Define *widget.Icon_t = AllocateStructure(Icon_t)
     _Set(*widget, #WIDGET_TYPE_ICON, *p, x, y, w, h)
     _AddItem(*p, *widget)
@@ -450,6 +462,7 @@ Module Widget
     *widget\iy = PathBoundsY()
     *widget\iw = PathBoundsWidth()
     *widget\ih = PathBoundsHeight()
+    *widget\color  = c
     StopVectorDrawing()
     ProcedureReturn *widget
   EndProcedure
@@ -499,9 +512,8 @@ Module Widget
 
 EndModule
 
-
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 309
-; FirstLine = 206
-; Folding = DAxH4-
+; CursorPosition = 40
+; FirstLine = 4
+; Folding = DQzX4-
 ; EnableXP
