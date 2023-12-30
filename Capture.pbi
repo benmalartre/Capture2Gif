@@ -45,7 +45,7 @@ EndDeclareModule
 Module Scr33nCord3r
   UseModule Capture
   Procedure GetRectangle(*rect.Rectangle_t, hwnd=#Null)
-    If InitSprite() = 0
+    If InitSprite() = 0 Or InitMouse() = 0 Or InitKeyboard() = 0
       MessageRequester("Error", "Can't open hardware acceleration", 0)
       End
     EndIf
@@ -272,9 +272,14 @@ Module Scr33nCord3r
   EndProcedure
 EndModule
 
+CompilerIf Not Defined(PB_Compiler_Backend,#PB_Constant)
+  CompilerError "Please use PureBasic Version 6.00 Beta1" 
+CompilerElseIf #PB_Compiler_Backend<>#PB_Backend_C
+  CompilerError "Please use Compiler-Option C Backend."
+CompilerEndIf 
 Scr33nCord3r::Launch()
-; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 263
-; FirstLine = 241
+; IDE Options = PureBasic 6.04 LTS (Windows - x64)
+; CursorPosition = 278
+; FirstLine = 225
 ; Folding = --
 ; EnableXP
