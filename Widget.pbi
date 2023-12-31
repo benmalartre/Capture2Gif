@@ -191,7 +191,7 @@ Module Widget
       Define *icon.Icon_t = *widget
       AddPathSegments(*icon\icon)
       Define rx.i = x - (*widget\x + (*icon\width-*icon\iw)/2)
-      Define ry.i = (y - *widget\y - *icon\iy)
+      Define ry.i = y - (*widget\y + (*icon\height-*icon\ih)/2)
       ProcedureReturn Bool(rx > 0 And rx < *icon\iw And 
                            ry > 0 And ry < *icon\ih)
     EndIf
@@ -514,7 +514,7 @@ Module Widget
 EndModule
 
 ; IDE Options = PureBasic 6.10 beta 1 (Windows - x64)
-; CursorPosition = 315
-; FirstLine = 220
-; Folding = DQ-X4-
+; CursorPosition = 193
+; FirstLine = 146
+; Folding = Dc-X4-
 ; EnableXP
