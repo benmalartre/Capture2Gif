@@ -7,35 +7,32 @@ INCLUDES = -I$(SRC_DIR)
 
 # settings
 #
-CFLAGS = -DPLATFORM_DARWIN \
-	 -DCC_GNU_ \
-	 -DOSMac_ \
-	 -DOSMacOSX_ \
-	 -DOSMac_MachO_ \
-	 -DPB_MACOS
-	 -O3 \
-	 -D_LANGUAGE_C_PLUS_PLUS\
-	 -mmacosx-version-min=10.9\
-	 -fPIC\
-	 -DNDEBUG\
-	 -static
+CFLAGS = 
+    -DPLATFORM_DARWIN \
+	-DCC_GNU_ \
+	-O3 \
+	-D_LANGUAGE_C_PLUS_PLUS\
+	-mmacosx-version-min=10.9\
+	-fPIC\
+	-DNDEBUG\
+	-static
 
 C++FLAGS = $(CFLAGS) \
-	   -std=c++11 \
-	   -stdlib=libc++ \
-	   -fno-gnu-keywords \
-	   -fpascal-strings  \
-	   -Wno-deprecated \
-	   -Wpointer-arith \
-	   -Wwrite-strings \
-	   -Wno-long-long \
-	   -arch arm64
+	-std=c++11 \
+	-stdlib=libc++ \
+	-fno-gnu-keywords \
+	-fpascal-strings  \
+	-Wno-deprecated \
+	-Wpointer-arith \
+	-Wwrite-strings \
+	-Wno-long-long \
+	-arch arm64
 
 # iphone SDK
 #CFLAGS += -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.2.sdk
 
 # Apple SDK
-CFLAGS += -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+CFLAGS += -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 
 LDFLAGS +=
 

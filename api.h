@@ -1,7 +1,7 @@
 #ifndef ANIMATEDGIF_API_H
 #define ANIMATEDGIF_API_H
 #include <cstdint>
-#include <gif.h>
+#include "gif.h"
 
 struct AnimatedGif_Writer {
   GifWriter* g;
