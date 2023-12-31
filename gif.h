@@ -32,32 +32,7 @@
 #include <stdio.h>   // for FILE*
 #include <string.h>  // for memcpy and bzero
 #include <stdint.h>  // for integer typedefs
-
-// Define these macros to hook into a custom memory allocator.
-// TEMP_MALLOC and TEMP_FREE will only be called in stack fashion - frees in the reverse order of mallocs
-// and any temp memory allocated by a function will be freed before it exits.
-// MALLOC and FREE are used only by GifBegin and GifEnd respectively (to allocate a buffer the size of the image, which
-// is used to find changed pixels for delta-encoding.)
-
-#ifndef GIF_TEMP_MALLOC
 #include <stdlib.h>
-#define GIF_TEMP_MALLOC malloc
-#endif
-
-#ifndef GIF_TEMP_FREE
-#include <stdlib.h>
-#define GIF_TEMP_FREE free
-#endif
-
-#ifndef GIF_MALLOC
-#include <stdlib.h>
-#define GIF_MALLOC malloc
-#endif
-
-#ifndef GIF_FREE
-#include <stdlib.h>
-#define GIF_FREE free
-#endif
 
 const int kGifTransIndex = 0;
 
@@ -356,7 +331,7 @@ void GifMakePalette( const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_
     // SplitPalette is destructive (it sorts the pixels by color) so
     // we must create a copy of the image for it to destroy
     size_t imageSize = (size_t)(width * height * 4 * sizeof(uint8_t));
-    uint8_t* destroyableImage = (uint8_t*)GIF_TEMP_MALLOC(imageSize);
+    uint8_t* destroyableImage = (uint8_t*)malloc(imageSize);
     memcpy(destroyableImage, nextFrame, imageSize);
 
     int numPixels = (int)(width * height);
@@ -369,11 +344,11 @@ void GifMakePalette( const uint8_t* lastFrame, const uint8_t* nextFrame, uint32_
 
     GifSplitPalette(destroyableImage, numPixels, 1, lastElt, splitElt, splitDist, 1, buildForDither, pPal);
 
-    GIF_TEMP_FREE(destroyableImage);
+    free(destroyableImage);
 
     // add the bottom node for the transparency index
-    pPal->treeSplit[1ull << (bitDepth-1)] = 0;
-    pPal->treeSplitElt[1ull << (bitDepth-1)] = 0;
+    pPal->treeSplit[1 << (bitDepth-1)] = 0;
+    pPal->treeSplitElt[1 << (bitDepth-1)] = 0;
 
     pPal->r[0] = pPal->g[0] = pPal->b[0] = 0;
 }
@@ -386,7 +361,7 @@ void GifDitherImage( const uint8_t* lastFrame, const uint8_t* nextFrame, uint8_t
     // quantPixels initially holds color*256 for all pixels
     // The extra 8 bits of precision allow for sub-single-color error values
     // to be propagated
-    int32_t *quantPixels = (int32_t *)GIF_TEMP_MALLOC(sizeof(int32_t) * (size_t)numPixels * 4);
+    int32_t *quantPixels = (int32_t *)malloc(sizeof(int32_t) * (size_t)numPixels * 4);
 
     for( int ii=0; ii<numPixels*4; ++ii )
     {
@@ -484,7 +459,7 @@ void GifDitherImage( const uint8_t* lastFrame, const uint8_t* nextFrame, uint8_t
         outFrame[ii] = (uint8_t)quantPixels[ii];
     }
 
-    GIF_TEMP_FREE(quantPixels);
+    free(quantPixels);
 }
 
 // Picks palette colors for the image using simple thresholding, no dithering
@@ -641,7 +616,7 @@ void GifWriteLzwImage(FILE* f, uint8_t* image, uint32_t left, uint32_t top,  uin
 
     fputc(minCodeSize, f); // min code size 8 bits
 
-    GifLzwNode* codetree = (GifLzwNode*)GIF_TEMP_MALLOC(sizeof(GifLzwNode)*4096);
+    GifLzwNode* codetree = (GifLzwNode*)malloc(sizeof(GifLzwNode)*4096);
 
     memset(codetree, 0, sizeof(GifLzwNode)*4096);
     int32_t curCode = -1;
@@ -721,7 +696,7 @@ void GifWriteLzwImage(FILE* f, uint8_t* image, uint32_t left, uint32_t top,  uin
 
     fputc(0, f); // image block terminator
 
-    GIF_TEMP_FREE(codetree);
+    free(codetree);
 }
 
 struct GifWriter
@@ -737,18 +712,15 @@ struct GifWriter
 bool GifBegin( GifWriter* writer, const char* filename, uint32_t width, uint32_t height, uint32_t delay, int32_t bitDepth = 8, bool dither = false )
 {
     (void)bitDepth; (void)dither; // Mute "Unused argument" warnings
-#if defined(_MSC_VER) && (_MSC_VER >= 1400)
-	writer->f = 0;
-    fopen_s(&writer->f, filename, "wb");
-#else
+
     writer->f = fopen(filename, "wb");
-#endif
+
     if(!writer->f) return false;
 
     writer->firstFrame = true;
 
     // allocate
-    writer->oldImage = (uint8_t*)GIF_MALLOC(width*height*4);
+    writer->oldImage = (uint8_t*)malloc(width*height*4);
 
     fputs("GIF89a", writer->f);
 
@@ -824,7 +796,7 @@ bool GifEnd( GifWriter* writer )
 
     fputc(0x3b, writer->f); // end of file
     fclose(writer->f);
-    GIF_FREE(writer->oldImage);
+    free(writer->oldImage);
 
     writer->f = NULL;
     writer->oldImage = NULL;

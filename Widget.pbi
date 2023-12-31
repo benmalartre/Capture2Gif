@@ -313,6 +313,7 @@ Module Widget
   
   Procedure Callback(*widget.Widget_t)
     If *widget\callback
+      Debug "we have callback"
       *widget\callback(*widget\data)
       Widget::Resize(*widget\parent, *widget\parent\x, *widget\parent\y, 
                      *widget\parent\width, *widget\parent\height)
@@ -512,8 +513,8 @@ Module Widget
 
 EndModule
 
-; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 40
-; FirstLine = 4
-; Folding = DQzX4-
+; IDE Options = PureBasic 6.10 beta 1 (Windows - x64)
+; CursorPosition = 315
+; FirstLine = 220
+; Folding = DQ-X4-
 ; EnableXP

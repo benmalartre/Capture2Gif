@@ -201,10 +201,13 @@ Module ScreenCaptureToGif
   
       If event = #PB_Event_Gadget 
         Define gadget = EventGadget()
+        Debug  "gadget event : "+Str(gadget)
   
         If FindMapElement(widgets(), Str(gadget))
           Widget::OnEvent(widgets())
           Widget::Draw(root)
+        Else 
+          Debug "gadget not in map"
         EndIf
         
       ElseIf event = #PB_Event_SizeWindow
@@ -248,8 +251,8 @@ Module ScreenCaptureToGif
 EndModule
 
 ScreenCaptureToGif::Launch()
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 127
-; FirstLine = 127
+; IDE Options = PureBasic 6.10 beta 1 (Windows - x64)
+; CursorPosition = 209
+; FirstLine = 163
 ; Folding = v-
 ; EnableXP

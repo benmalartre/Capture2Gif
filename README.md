@@ -8,6 +8,7 @@ Animated Gif Library from https://github.com/charlietangora/gif-h
 ```
 mkdir build
 cd build
-cmake ../ -DCMAKE_BUILD_TYPE=Release
+cmake -DCMAKE_BUILD_TYPE=Release ..\
 msbuild Gif.sln
+copy /Y Release\Gif.lib ..\Gif.lib
 ```

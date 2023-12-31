@@ -113,6 +113,7 @@ Module Capture
   
 EndModule
 ; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 19
+; CursorPosition = 21
+; FirstLine = 18
 ; Folding = --
 ; EnableXP
