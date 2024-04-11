@@ -42,15 +42,17 @@ Module Capture
   Procedure _FlipBuffer(*c.Capture_t)
     StartDrawing(ImageOutput(*c\img))
     
-    Define *input = DrawingBuffer()
-    Define *output = *input
+    Define size = *c\rect\w * *c\rect\h * 4
+    Define *copy = AllocateMemory(size)
+    Define *buffer = DrawingBuffer()
+    CopyMemory(*buffer, *copy, size)
     Define numPixelsInRow.i = *c\rect\w
     Define numRows.i = *c\rect\h
     Define *mask = Capture::?swap_red_blue_mask
     
     CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
-      ! mov rsi, [p.p_input]                ; input buffer to rsi register
-      ! mov rdi, [p.p_output]               ; output buffer to rdi register
+      ! mov rsi, [p.p_copy]                 ; copy buffer to rsi register
+      ! mov rdi, [p.p_buffer]               ; drawing buffer to rdi register
       ! mov eax, [p.v_numPixelsInRow]       ; image width in rax register
       ! mov ecx, [p.v_numRows]              ; image height in rcx register
       ! mov r10, [p.p_mask]                 ; load mask in r10 register
@@ -78,9 +80,18 @@ Module Capture
       ! next_row:
       !   dec rcx                           ; decrement row counter
       !   jg loop_over_rows                 ; loop next row
-    
+      
+    CompilerElse
+      Define row.i
+      Define rowSize = numPixelsInRow * 4
+      For row = 0 To numRows - 1
+        CopyMemory(*copy + row * rowSize, *buffer + (numRows - row)* rowSize, rowSize)
+      Next
+      
     CompilerEndIf
     StopDrawing()
+    
+    FreeMemory(*copy)
   EndProcedure
   
   Procedure Init(*c.Capture_t, *r.Platform::Rectangle_t, hWnd=#Null)   
@@ -112,8 +123,8 @@ Module Capture
  
   
 EndModule
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 21
-; FirstLine = 18
+; IDE Options = PureBasic 6.10 LTS (Windows - x64)
+; CursorPosition = 93
+; FirstLine = 46
 ; Folding = --
 ; EnableXP

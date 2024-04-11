@@ -20,6 +20,7 @@ DeclareModule ScreenCaptureToGif
     close.b
     *writer
     hWnd.i
+    elapsed.q
   EndStructure
 
   Declare GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
@@ -46,8 +47,8 @@ Module ScreenCaptureToGif
     ; first capture desktop framebuffer
     Define background.Capture_t
     Define rect.Platform::Rectangle_t
-    rect\x = 0
-    rect\y = 0
+    rect\x = DesktopX(0)
+    rect\y = DesktopY(0)
     rect\w = DesktopWidth(0)
     rect\h = DesktopHeight(0)
     
@@ -55,9 +56,9 @@ Module ScreenCaptureToGif
     Capture::Frame(background, #False)
     
     ; then open a fullscreen window
-    Define flags = #PB_Window_Maximize|#PB_Window_BorderLess|#PB_Window_Invisible
-    Define window = OpenWindow(#PB_Any, rect\x, rect\y, rect\w, rect\h, "background", flags)    
-    Define canvas = CanvasGadget(#PB_Any, rect\x, rect\y, rect\w, rect\h, #PB_Canvas_Keyboard)
+    Define flags = #PB_Window_Maximize|#PB_Window_BorderLess|#PB_Window_InnerCoordinate
+    Define window = OpenWindow(#PB_Any, rect\x, rect\y, rect\w, rect\h, "", flags)    
+    Define canvas = CanvasGadget(#PB_Any, 0, 0, rect\w, rect\h, #PB_Canvas_Keyboard)
     Platform::EnterWindowFullscreen(window)
     HideWindow(window, #False)
     
@@ -152,7 +153,8 @@ Module ScreenCaptureToGif
   
   Procedure Launch()
     Define app.App_t
-    app\delay = 50
+    app\delay = 5
+    app\elapsed = 0
     app\record = #False
     app\close = #False
     app\outputFilename = RandomString(32)
@@ -222,18 +224,22 @@ Module ScreenCaptureToGif
     Widgets(Str(Widget::GetGadgetId(ico2))) = ico2
 ;     
     
-;     Define hWnd = Win::GetWindowByName("XSIFloatingView")
+    Widget::Resize(root, 
+                   0, 
+                   0, 
+                   WindowWidth(app\window, #PB_Window_InnerCoordinate), 
+                   WindowHeight(app\window, #PB_Window_InnerCoordinate))
     
     Repeat
-      Define event = WaitWindowEvent(app\delay)
-  
+      
+      Define startTime.q = ElapsedMilliseconds()
+      Define event = WindowEvent()
+      
       If event = #PB_Event_Gadget 
         Define gadget = EventGadget()
 
         If FindMapElement(widgets(), Str(gadget))
-            Debug "Gadget Event : "+Str(gadget)
           Widget::OnEvent(widgets())
-        Else 
         EndIf
         
       ElseIf event = #PB_Event_SizeWindow
@@ -244,16 +250,19 @@ Module ScreenCaptureToGif
                        WindowHeight(app\window, #PB_Window_InnerCoordinate))
       EndIf
       
-      If app\record
+      If app\record And app\elapsed > app\delay
+        Debug "capture frame"
         SetWindowColor(app\window, RGB(0,64,255))
         Capture::Frame(app\capture, #True)
         StartDrawing(ImageOutput(app\capture\img))
         AnimatedGif_AddFrame(app\writer, DrawingBuffer())
         StopDrawing()
-        Delay(app\delay)
+        app\elapsed = 0
       Else
         SetWindowColor(app\window, RGB(128,128,128))
       EndIf
+      
+      app\elapsed +  (ElapsedMilliseconds() - startTime)
       
     Until app\close = #True Or event = #PB_Event_CloseWindow
     Capture::Term(app\capture)  
@@ -277,7 +286,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 162
-; FirstLine = 144
+; CursorPosition = 58
+; FirstLine = 31
 ; Folding = f-
 ; EnableXP
