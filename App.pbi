@@ -222,6 +222,11 @@ Module ScreenCaptureToGif
   EndProcedure
   
   Procedure _Event(*app.App_t, event.i)
+    If event = #PB_Event_CloseWindow
+      *app\close = #True
+      ProcedureReturn
+    EndIf
+    
     Define window = EventWindow()
     If window = *app\window : _WindowEvent(*app, event) : EndIf
     If window = *app\region : _RegionEvent(*app, event) : EndIf
@@ -400,7 +405,7 @@ Module ScreenCaptureToGif
       app\elapsed +  (ElapsedMilliseconds() - startTime)
       
     Until app\close = #True Or event = #PB_Event_CloseWindow
-    Capture::Term(app\capture)  
+ 
   EndProcedure
   
   Procedure OnRecord(*app.App_t)
@@ -428,7 +433,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 33
-; FirstLine = 9
+; CursorPosition = 407
+; FirstLine = 378
 ; Folding = ---
 ; EnableXP

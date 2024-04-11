@@ -135,9 +135,8 @@ Module Capture
     
   EndProcedure
   
-  Procedure Term(*c.Capture_t)
+  Procedure Term(*c.Capture_t)    
     AnimatedGif_Term(*c\writer)
-   
     If IsImage(*c\img) : FreeImage(*c\img) : EndIf
     If *c\buffer : FreeMemory(*c\buffer) : EndIf
     
@@ -145,7 +144,7 @@ Module Capture
 
 EndModule
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 93
-; FirstLine = 86
+; CursorPosition = 138
+; FirstLine = 84
 ; Folding = --
 ; EnableXP
