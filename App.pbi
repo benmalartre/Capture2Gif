@@ -119,6 +119,21 @@ Module ScreenCaptureToGif
        
   EndProcedure
   
+  Procedure.s RandomString(len.i)
+    Define string.s
+    For i=0 To len-1
+      Select Random(2) 
+        Case 0  ; (a ---> z)
+          string + Chr(Random(25) + 97)
+        Case 1  ; (A ---> Z)
+          string + Chr(Random(25) + 65)
+        Default ; (0 ---> 9)
+          string + Chr(Random(9) + 48)
+      EndSelect
+    Next
+    ProcedureReturn string
+  EndProcedure
+  
   Procedure SelectRectangle(*app.App_t)
     StickyWindow(*app\window, #False)
     Define rect.Platform::Rectangle_t
@@ -140,12 +155,12 @@ Module ScreenCaptureToGif
     app\delay = 50
     app\record = #False
     app\close = #False
-    app\outputFilename = "image"
+    app\outputFilename = RandomString(32)
     CompilerSelect #PB_Compiler_OS
       CompilerCase #PB_OS_Windows
-        app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif"
+        app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif/captures"
       CompilerCase #PB_OS_MacOS
-        app\outputFolder = "/Users/malartrebenjamin/Documents/RnD/Capture2Gif"
+        app\outputFolder = "/Users/malartrebenjamin/Documents/RnD/Capture2Gif/captures"
     CompilerEndSelect
     
     app\writer = #Null
@@ -165,22 +180,31 @@ Module ScreenCaptureToGif
     Platform::EnsureCaptureAccess()
     
     Define root = Widget::CreateRoot(app\window)
-    ;     Define c0 =   Widget::CreateContainer(root, 0, 50,width, 50, #False, Widget::#WIDGET_LAYOUT_VERTICAL));     Define explorer = Widget::CreateExplorer(c0, 10, 10, width-20, 32))
-  
-    Define c1 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_VERTICAL)
-    Define btn1 = Widget::CreateButton(c1, "Select Region", 10, 10, width-20, 32)
-    Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 50, width-20, 32)
     
-    Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-    Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32, RGBA(20,220, 20, 255))
-    Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32, RGBA(220, 60, 20, 255))
+    Define c0 =  Widget::CreateContainer(root, 0, 0,width, 20, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+    Define path = Widget::CreateString(c0, 0, 0, width-40, 20)
+    Define btn0 = Widget::CreateButton(c0, "...", width-40, 0, 40, 20)
+    CloseGadgetList()
+
+    Define c1 =   Widget::CreateContainer(root, 0, 40,width, 80, Widget::#WIDGET_LAYOUT_VERTICAL)
+    Define btn1 = Widget::CreateButton(c1, "Select Region", 10, 20, width-20, 32)
+    Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 60, width-20, 32)
+    CloseGadgetList()
+    
+    Define c2 =   Widget::CreateContainer(root, 0, 120,width, 50, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+    Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 0, 0, 32, 32, RGBA(20,220, 20, 255))
+    Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 50, 0, 32, 32, RGBA(220, 60, 20, 255))
+    CloseGadgetList()
+    
+    ;Define c0 =   Widget::CreateContainer(root, 0, 50,width, 50, #False, Widget::#WIDGET_LAYOUT_VERTICAL));     Define explorer = Widget::CreateExplorer(c0, 10, 10, width-20, 32))
+    
+
     
 ;     Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
 ;     Define lst  = Widget::CreateList(c3, "zob", 0,0,100,100)
 ;     Define check = Widget::CreateCheck(c3, "zob", #True, 120, 10, 32, 32)
     
     Widget::Resize(root, 0, 0, width, height)
-    Widget::Draw(root)
     Widget::SetState(ico1, Widget::#WIDGET_STATE_TOGGLE)
     Widget::SetCallback(btn1, @SelectRectangle(), app)   
     Widget::SetCallback(btn2, @SelectWindow(), app) 
@@ -190,8 +214,12 @@ Module ScreenCaptureToGif
     StickyWindow(app\window, #True)
     
     NewMap widgets.i()    
-    widgets(Str(Widget::GetGadgetId(c1))) = c1
-    Widgets(Str(Widget::GetGadgetId(c2))) = c2
+    widgets(Str(Widget::GetGadgetId(path))) = path
+    Widgets(Str(Widget::GetGadgetId(btn0))) = btn0
+    widgets(Str(Widget::GetGadgetId(btn1))) = btn1
+    Widgets(Str(Widget::GetGadgetId(btn2))) = btn2
+    widgets(Str(Widget::GetGadgetId(ico1))) = ico1
+    Widgets(Str(Widget::GetGadgetId(ico2))) = ico2
 ;     
     
 ;     Define hWnd = Win::GetWindowByName("XSIFloatingView")
@@ -201,13 +229,11 @@ Module ScreenCaptureToGif
   
       If event = #PB_Event_Gadget 
         Define gadget = EventGadget()
-        Debug  "gadget event : "+Str(gadget)
-  
+
         If FindMapElement(widgets(), Str(gadget))
+            Debug "Gadget Event : "+Str(gadget)
           Widget::OnEvent(widgets())
-          Widget::Draw(root)
         Else 
-          Debug "gadget not in map"
         EndIf
         
       ElseIf event = #PB_Event_SizeWindow
@@ -216,7 +242,6 @@ Module ScreenCaptureToGif
                        0, 
                        WindowWidth(app\window, #PB_Window_InnerCoordinate), 
                        WindowHeight(app\window, #PB_Window_InnerCoordinate))
-        Widget::Draw(root)
       EndIf
       
       If app\record
@@ -251,8 +276,8 @@ Module ScreenCaptureToGif
 EndModule
 
 ScreenCaptureToGif::Launch()
-; IDE Options = PureBasic 6.10 beta 1 (Windows - x64)
-; CursorPosition = 209
-; FirstLine = 163
-; Folding = v-
+; IDE Options = PureBasic 6.10 LTS (Windows - x64)
+; CursorPosition = 162
+; FirstLine = 144
+; Folding = f-
 ; EnableXP
