@@ -301,6 +301,7 @@ Module ScreenCaptureToGif
       GetRectangle(*app, *app\capture\rect)
     EndIf
     
+    Capture::Init(*app\capture, *app\rect, *app\hWnd)
     *app\writer = Capture::AnimatedGif_Init( *app\outputFolder+"/"+*app\outputFilename+".gif", 
                                         *app\capture\rect\w, *app\capture\rect\h, *app\delay)
   EndProcedure
@@ -310,12 +311,12 @@ Module ScreenCaptureToGif
     *app\record = #False
     _DrawRegion(*app)
     *app\outputFilename = _RandomString(8)
+    Capture::Term(*app\capture)
   EndProcedure
   
   Procedure SelectRectangle(*app.App_t)
     StickyWindow(*app\window, #False)
     ScreenCaptureToGif::InitRectangle(*app)
-    Capture::Init(*app\capture, *app\rect, *app\hWnd)
     StickyWindow(*app\window, #True)
   EndProcedure
   
@@ -439,7 +440,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 304
-; FirstLine = 291
+; CursorPosition = 277
+; FirstLine = 257
 ; Folding = ---
 ; EnableXP
