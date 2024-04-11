@@ -21,6 +21,8 @@ DeclareModule ScreenCaptureToGif
     *writer
     hWnd.i
     elapsed.q
+    rect.Platform::Rectangle_t
+    Map widgets.i() 
   EndStructure
 
   Declare GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
@@ -28,7 +30,6 @@ DeclareModule ScreenCaptureToGif
   Declare SelectRectangle(*app.App_t)
   
   Declare OnRecord(*app.App_t)
-  Declare OnStop(*app.App_t)
   
   Declare Launch()
 EndDeclareModule
@@ -56,11 +57,10 @@ Module ScreenCaptureToGif
     Capture::Frame(background, #False)
     
     ; then open a fullscreen window
-    Define flags = #PB_Window_Maximize|#PB_Window_BorderLess|#PB_Window_InnerCoordinate
+    Define flags = #PB_Window_Maximize|#PB_Window_BorderLess|#PB_Window_NoActivate
     Define window = OpenWindow(#PB_Any, rect\x, rect\y, rect\w, rect\h, "", flags)    
     Define canvas = CanvasGadget(#PB_Any, 0, 0, rect\w, rect\h, #PB_Canvas_Keyboard)
     Platform::EnterWindowFullscreen(window)
-    HideWindow(window, #False)
     
     Define startX.i, startY.i, endX.i, endY.i
     Define state.i = 0
@@ -114,13 +114,22 @@ Module ScreenCaptureToGif
     If *r\h % 4 : *r\h + ( 4 - *r\h  % 4 ) : EndIf
     
     SetActiveWindow(*app\window)
-    CloseWindow(window)
-        
-
-       
+    CloseWindow(window) 
   EndProcedure
   
-  Procedure.s RandomString(len.i)
+  Procedure _StartRecord(*app.App_t)
+    *app\writer = Capture::AnimatedGif_Init( *app\outputFolder+"/"+*app\outputFilename+".gif", 
+                                        *app\capture\rect\w, *app\capture\rect\h, *app\delay)
+    *app\record = #True     
+  EndProcedure
+  
+  Procedure _StopRecord(*app.App_t)
+    AnimatedGif_Term(*app\writer)
+    *app\record = #False
+    Capture::Term(*app\capture)
+  EndProcedure
+  
+  Procedure.s _RandomString(len.i)
     Define string.s
     For i=0 To len-1
       Select Random(2) 
@@ -137,14 +146,9 @@ Module ScreenCaptureToGif
   
   Procedure SelectRectangle(*app.App_t)
     StickyWindow(*app\window, #False)
-    Define rect.Platform::Rectangle_t
-    ScreenCaptureToGif::GetRectangle(*app, rect)
-    Capture::Init(*app\capture, rect, *app\hWnd)
-   
-    *app\writer = Capture::AnimatedGif_Init( *app\outputFolder+"/"+*app\outputFilename+".gif", 
-                                            *app\capture\rect\w, *app\capture\rect\h, *app\delay)
+    ScreenCaptureToGif::GetRectangle(*app, *app\rect)
+    Capture::Init(*app\capture, *app\rect, *app\hWnd)
     StickyWindow(*app\window, #True)
-    *app\record = #True
   EndProcedure
   
   Procedure SelectWindow(*app.App_t)
@@ -157,7 +161,7 @@ Module ScreenCaptureToGif
     app\elapsed = 0
     app\record = #False
     app\close = #False
-    app\outputFilename = RandomString(32)
+    app\outputFilename = _RandomString(8)
     CompilerSelect #PB_Compiler_OS
       CompilerCase #PB_OS_Windows
         app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif/captures"
@@ -166,7 +170,7 @@ Module ScreenCaptureToGif
     CompilerEndSelect
     
     app\writer = #Null
-    Define width = 400
+    Define width = 600
     Define height = 200
     app\window = OpenWindow( #PB_Any, 
                              200, 
@@ -183,20 +187,23 @@ Module ScreenCaptureToGif
     
     Define root = Widget::CreateRoot(app\window)
     
-    Define c0 =  Widget::CreateContainer(root, 0, 0,width, 20, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-    Define path = Widget::CreateString(c0, 0, 0, width-40, 20)
-    Define btn0 = Widget::CreateButton(c0, "...", width-40, 0, 40, 20)
+    Define c0 =  Widget::CreateContainer(root, "c0", 0, 0,width, 20, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+    Define l0 = Widget::CreateText(c0, "l0", "output folder :", 0, 0, 80, 20)
+    Define path = Widget::CreateString(c0, "path", app\outputFolder, 0, 60, width-120, 20)
+    Define btn0 = Widget::CreateButton(c0, "btn0", "...", width-40, 0, 40, 20)
     CloseGadgetList()
 
-    Define c1 =   Widget::CreateContainer(root, 0, 40,width, 80, Widget::#WIDGET_LAYOUT_VERTICAL)
-    Define btn1 = Widget::CreateButton(c1, "Select Region", 10, 20, width-20, 32)
-    Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 60, width-20, 32)
+    Define c1 =   Widget::CreateContainer(root, "c1", 0, 40,width, 140, Widget::#WIDGET_LAYOUT_VERTICAL)
+    Define btn1 = Widget::CreateButton(c1, "btn1", "Select Region", 10, 20, width-20, 32)
+    Define btn2 = Widget::CreateButton(c1, "btn2", "Select Window", 10, 60, width-20, 32)
+    Define btn3 = Widget::CreateButton(c1, "btn3", "Start Recording", 10, 100, width-20, 32)
     CloseGadgetList()
     
-    Define c2 =   Widget::CreateContainer(root, 0, 120,width, 50, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-    Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 0, 0, 32, 32, RGBA(20,220, 20, 255))
-    Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 50, 0, 32, 32, RGBA(220, 60, 20, 255))
-    CloseGadgetList()
+;     Define c2 =   Widget::CreateContainer(root, 0, 120,width, 50, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+; ;     Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 0, 0, 32, 32, RGBA(20,220, 20, 255))
+; ;     Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 50, 0, 32, 32, RGBA(220, 60, 20, 255))
+; 
+;     CloseGadgetList()
     
     ;Define c0 =   Widget::CreateContainer(root, 0, 50,width, 50, #False, Widget::#WIDGET_LAYOUT_VERTICAL));     Define explorer = Widget::CreateExplorer(c0, 10, 10, width-20, 32))
     
@@ -205,30 +212,30 @@ Module ScreenCaptureToGif
 ;     Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
 ;     Define lst  = Widget::CreateList(c3, "zob", 0,0,100,100)
 ;     Define check = Widget::CreateCheck(c3, "zob", #True, 120, 10, 32, 32)
-    
-    Widget::Resize(root, 0, 0, width, height)
-    Widget::SetState(ico1, Widget::#WIDGET_STATE_TOGGLE)
+   
+
     Widget::SetCallback(btn1, @SelectRectangle(), app)   
     Widget::SetCallback(btn2, @SelectWindow(), app) 
-    Widget::SetCallback(ico1, @OnRecord(), app)
-    Widget::SetCallback(ico2, @OnStop(), app)
+    Widget::SetCallback(btn3, @OnRecord(), app)
+    
+    Widget::SetState(btn3, Widget::#WIDGET_STATE_TOGGLE)
+
   
     StickyWindow(app\window, #True)
     
-    NewMap widgets.i()    
-    widgets(Str(Widget::GetGadgetId(path))) = path
-    Widgets(Str(Widget::GetGadgetId(btn0))) = btn0
-    widgets(Str(Widget::GetGadgetId(btn1))) = btn1
-    Widgets(Str(Widget::GetGadgetId(btn2))) = btn2
-    widgets(Str(Widget::GetGadgetId(ico1))) = ico1
-    Widgets(Str(Widget::GetGadgetId(ico2))) = ico2
+    app\widgets(Str(Widget::GetGadgetId(path))) = path
+    app\widgets(Str(Widget::GetGadgetId(btn0))) = btn0
+    app\widgets(Str(Widget::GetGadgetId(btn1))) = btn1
+    app\widgets(Str(Widget::GetGadgetId(btn2))) = btn2
+    app\widgets(Str(Widget::GetGadgetId(btn3))) = btn3
+
 ;     
     
     Widget::Resize(root, 
-                   0, 
-                   0, 
-                   WindowWidth(app\window, #PB_Window_InnerCoordinate), 
-                   WindowHeight(app\window, #PB_Window_InnerCoordinate))
+                   Widget::#WIDGET_PADDING_X, 
+                   Widget::#WIDGET_PADDING_Y, 
+                   WindowWidth(app\window, #PB_Window_InnerCoordinate)-2*Widget::#WIDGET_PADDING_X, 
+                   WindowHeight(app\window, #PB_Window_InnerCoordinate)-2*Widget::#WIDGET_PADDING_Y)
     
     Repeat
       
@@ -238,8 +245,8 @@ Module ScreenCaptureToGif
       If event = #PB_Event_Gadget 
         Define gadget = EventGadget()
 
-        If FindMapElement(widgets(), Str(gadget))
-          Widget::OnEvent(widgets())
+        If FindMapElement(app\widgets(), Str(gadget))
+          Widget::OnEvent(app\widgets())
         EndIf
         
       ElseIf event = #PB_Event_SizeWindow
@@ -251,7 +258,6 @@ Module ScreenCaptureToGif
       EndIf
       
       If app\record And app\elapsed > app\delay
-        Debug "capture frame"
         SetWindowColor(app\window, RGB(0,64,255))
         Capture::Frame(app\capture, #True)
         StartDrawing(ImageOutput(app\capture\img))
@@ -259,7 +265,7 @@ Module ScreenCaptureToGif
         StopDrawing()
         app\elapsed = 0
       Else
-        SetWindowColor(app\window, RGB(128,128,128))
+        SetWindowColor(app\window, RGB(222,222,222))
       EndIf
       
       app\elapsed +  (ElapsedMilliseconds() - startTime)
@@ -269,24 +275,31 @@ Module ScreenCaptureToGif
   EndProcedure
   
   Procedure OnRecord(*app.App_t)
-    *app\outputFilename = "test"
-    SelectRectangle(*app)
-    *app\record = #True
-  EndProcedure
-  
-  Procedure OnStop(*app.App_t)
-    If *app\record
-      AnimatedGif_Term(*app\writer)
-      *app\record = #False
+    Define *btn.Widget::Button_t = Widget::GetWidgetByName(*app\widgets(), "btn3")
+
+    If *btn
+      If *btn\state & Widget::#WIDGET_STATE_ACTIVE
+        _StopRecord(*app) 
+        *btn\text = "Start Recording"
+        SetGadgetText(*btn\gadget, *btn\text)
+        SetGadgetAttribute(*btn\gadget, #PB_Gadget_FrontColor, RGB(55,255,120))
+      Else
+        _StartRecord(*app)
+        *btn\text = "Stop Recording"
+        SetGadgetText(*btn\gadget, *btn\text)
+        SetGadgetAttribute(*btn\gadget, #PB_Gadget_FrontColor, RGB(255,55,120))
+      EndIf 
+      
     EndIf
-    *app\close = #True
+    
   EndProcedure
+
   
 EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 58
-; FirstLine = 31
-; Folding = f-
+; CursorPosition = 267
+; FirstLine = 208
+; Folding = -0
 ; EnableXP

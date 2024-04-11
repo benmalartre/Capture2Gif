@@ -43,11 +43,11 @@ DeclareModule Widget
   #WIDGET_PADDING_Y     = 6
   #WIDGET_STROKE_WIDTH  = 4
   
-  Global BACKGROUND_COLOR = RGBA(120, 120, 120, 255)
   
   Prototype CallbackFn(*data=#Null)
   
   Structure Widget_t
+    name.s
     type.i
     x.i
     y.i
@@ -68,7 +68,6 @@ DeclareModule Widget
   Structure Container_t Extends Widget_t
     List *items.Widget_t()
     layout.i
-    color.i
   EndStructure
   
   Structure Text_t Extends Widget_t
@@ -102,16 +101,15 @@ DeclareModule Widget
   EndStructure
   
   Declare CreateRoot(window.i)
-  Declare CreateContainer(*p.Widget_t, x.i, y.i, w.i, h.i,l=#WIDGET_LAYOUT_VERTICAL)
-  Declare CreateButton(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
-  Declare CreateIcon(*p.Container_t, icon.s, x.i, y.i, w.i, h.i, c.i)
-  Declare CreateText(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
-  Declare CreateExplorer(*p.Container_t, x.i, y.i, w.i, h.i)
-  Declare CreateString(*p.Container_t, x.i, y.i, w.i, h.i)
-  Declare CreateCheck(*p.Container_t, label.s, check.b, x.i, y.i, w.i, h.i)
-  Declare CreateList(*p.Container_t, label.s, x.i, y.i, w.i, h.i)
+  Declare CreateContainer(*p.Widget_t, name.s, x.i, y.i, w.i, h.i,l=#WIDGET_LAYOUT_VERTICAL)
+  Declare CreateButton(*p.Container_t, name.s, text.s, x.i, y.i, w.i, h.i)
+  Declare CreateIcon(*p.Container_t, name.s, icon.s, x.i, y.i, w.i, h.i, c.i)
+  Declare CreateText(*p.Container_t, name.s, text.s, x.i, y.i, w.i, h.i)
+  Declare CreateExplorer(*p.Container_t, name.s, x.i, y.i, w.i, h.i)
+  Declare CreateString(*p.Container_t, name.s, value.s, x.i, y.i, w.i, h.i)
+  Declare CreateCheck(*p.Container_t, name.s, label.s, check.b, x.i, y.i, w.i, h.i)
+  Declare CreateList(*p.Container_t, name.s, label.s, x.i, y.i, w.i, h.i)
   Declare OnEvent(*widget.Container_t)
-  Declare SetLayout(*p.Container_t, layout.i)
   Declare SetCallback(*widget.Widget_t, cb.CallbackFn, *data)
   Declare Resize(*widget.Widget_t, x.i, y.i, w.i, h.i)
   Declare Callback(*widget.Widget_t)
@@ -122,13 +120,15 @@ DeclareModule Widget
   Declare GetState(*widget.Widget_t, state)
   Declare GetAbsoluteX(*widget.Widget_t)
   Declare GetAbsoluteY(*widget.Widget_t)
+  Declare GetWidgetByName(Map widgets(), name.s)
 EndDeclareModule
 
 ;------------------------------------------------------------------------------------------------
 ; WIDGET IMPLEMENTATION
 ;------------------------------------------------------------------------------------------------
 Module Widget
-  Procedure _Set(*widget.Widget_t, t.i, parent.i, x.i, y.i, w.i, h.i)
+  Procedure _Set(*widget.Widget_t, t.i, name.s, parent.i, x.i, y.i, w.i, h.i)
+    *widget\name     = name
     *widget\type     = t
     *widget\x        = x
     *widget\y        = y
@@ -208,11 +208,6 @@ Module Widget
     ResetPath()
   EndProcedure
   
-  Procedure SetLayout(*p.Container_t, layout.i)
-    *p\layout = layout
-    Resize(*p, *p\x, *p\y, *p\width, *p\height)
-  EndProcedure
-  
   Procedure GetGadgetId(*widget.Widget_t)
     ProcedureReturn *widget\gadget
   EndProcedure
@@ -237,19 +232,34 @@ Module Widget
     ProcedureReturn y
   EndProcedure
   
+  Procedure GetWidgetByName(Map widgets.i(), name.s)
+    Debug "Get Widget By Name "
+    Define *widget.Widget_t
+    ForEach widgets()  
+      Debug widgets()
+      *widget = widgets()
+      Debug *widget\name
+      If *widget\name = name
+        ProcedureReturn *widget
+      EndIf
+    Next
+    ProcedureReturn #Null
+  EndProcedure
+  
+  
   Procedure Resize(*widget.Widget_t, x.i, y.i, w.i, h.i)
     Define oldWidth = *widget\width
     Define oldHeight = *widget\height
     If oldWidth = 0 : oldWIdth = w : EndIf
     If oldHeight = 0 : oldHeight = h : EndIf
-    *widget\x = x
+    *widget\x = x 
     *widget\y = y
     *widget\width = w
     *widget\height = h
     If *widget\type = #WIDGET_TYPE_CONTAINER
       Define *container.Container_t = *widget
       Define numItems = ListSize(*container\items())
-      ResizeGadget(*container\gadget, x, y, w, h)
+      ResizeGadget(*container\gadget, *widget\x, *widget\y, *widget\width, *widget\height)
       
       If Not numItems : ProcedureReturn : EndIf
       
@@ -262,11 +272,11 @@ Module Widget
           Define cy = 0
           ForEach *container\items()
             ratio = *container\items()\height / oldHeight
-            nh = ratio * h
+            nh = ratio * *widget\height
             If *container\items()\type >= #WIDGET_TYPE_CONTAINER
-              Resize(*container\items(),0, cy, w, nh)
+              Resize(*container\items(),0, cy, *widget\width, nh)
             Else
-              Resize(*container\items(), 0, cy, w, nh)
+              Resize(*container\items(), 0, cy, *widget\width, nh)
             EndIf
             cy + nh
           Next
@@ -277,11 +287,11 @@ Module Widget
           Define ratio.f
           ForEach *container\items()
             ratio = *container\items()\width / oldWidth
-            nw = ratio * w
+            nw = ratio * *widget\width
             If *container\items()\type >= #WIDGET_TYPE_CONTAINER
-              Resize(*container\items(),cx, 0, nw, h)
+              Resize(*container\items(),cx, 0, nw, *widget\height)
             Else
-              Resize(*container\items(), cx, 0, nw, h)
+              Resize(*container\items(), cx, 0, nw, *widget\height)
             EndIf
             cx + nw
           Next
@@ -289,7 +299,7 @@ Module Widget
       EndSelect
       
     Else
-      ResizeGadget(*widget\gadget, x, y, w, h)
+      ResizeGadget(*widget\gadget, *widget\x, *widget\y, *widget\width, *widget\height)
     EndIf
     
   EndProcedure
@@ -298,9 +308,9 @@ Module Widget
     Define event.i = EventType()    
     If event = #PB_EventType_LeftClick
 
-      ToggleState(*widget, Widget::#WIDGET_STATE_ACTIVE)
-
       Callback(*widget)
+      
+      ToggleState(*widget, Widget::#WIDGET_STATE_ACTIVE)
       
     ElseIf event = #PB_EventType_MouseMove
  
@@ -314,7 +324,6 @@ Module Widget
   
   Procedure Callback(*widget.Widget_t)
     If *widget\callback
-      Debug "we have callback"
       *widget\callback(*widget\data)
       Widget::Resize(*widget\parent, *widget\parent\x, *widget\parent\y, 
                      *widget\parent\width, *widget\parent\height)
@@ -332,6 +341,8 @@ Module Widget
    
   Procedure ToggleState(*widget.Widget_t, state)
     *widget\state ! state
+    
+    SetGadgetState(*widget\gadget, *widget\state & state)
   EndProcedure
   
   Procedure GetState(*widget.Widget_t, state)
@@ -342,35 +353,34 @@ Module Widget
     Define *root.Container_t = AllocateStructure(Container_t)
     Define width = WindowWidth(window, #PB_Window_InnerCoordinate)
     Define height = WindowHeight(window, #PB_Window_InnerCoordinate)
-    _Set(*root, #WIDGET_TYPE_CONTAINER, #Null, 0, 0, w, h)
+    _Set(*root, #WIDGET_TYPE_CONTAINER, "root", #Null, 0, 0, w, h)
     *root\state = #WIDGET_STATE_ROOT
     *root\gadget = ContainerGadget(#PB_Any, 0, 0, w, h)
     *root\layout = #WIDGET_LAYOUT_VERTICAL
     ProcedureReturn *root
   EndProcedure
   
-  Procedure CreateContainer(*p.Widget_t, x.i, y.i, w.i, h.i, l.i=#WIDGET_LAYOUT_VERTICAL)
+  Procedure CreateContainer(*p.Widget_t, name.s, x.i, y.i, w.i, h.i, l.i=#WIDGET_LAYOUT_VERTICAL)
     Define *widget.Container_t = AllocateStructure(Container_t)
-    _Set(*widget, #WIDGET_TYPE_CONTAINER, *p, x, y, w, h)
+    _Set(*widget, #WIDGET_TYPE_CONTAINER, name, *p, x, y, w, h)
     _AddItem(*p, *widget)
     *widget\gadget = ContainerGadget(#PB_Any, x, y, w, h)
     *widget\layout = l
-    *widget\color = BACKGROUND_COLOR
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure CreateButton(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
+  Procedure CreateButton(*p.Container_t, name.s, text.s, x.i, y.i, w.i, h.i)
      Define *widget.Button_t = AllocateStructure(Button_t)
-    _Set(*widget, #WIDGET_TYPE_BUTTON, *p, x, y, w, h)
+    _Set(*widget, #WIDGET_TYPE_BUTTON, name, *p, x, y, w, h)
     _AddItem(*p, *widget)
     *widget\text = text
     *widget\gadget = ButtonGadget(#PB_Any, x, y, w, h, text)
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure CreateIcon(*p.Container_t, icon.s, x.i, y.i, w.i, h.i, c.i)
+  Procedure CreateIcon(*p.Container_t, name.s, icon.s, x.i, y.i, w.i, h.i, c.i)
     Define *widget.Icon_t = AllocateStructure(Icon_t)
-    _Set(*widget, #WIDGET_TYPE_ICON, *p, x, y, w, h)
+    _Set(*widget, #WIDGET_TYPE_ICON, name, *p, x, y, w, h)
     _AddItem(*p, *widget)
     *widget\icon= icon
     *widget\image = CreateImage(#PB_Any, 32,32, 24, 666);
@@ -379,45 +389,43 @@ Module Widget
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure CreateText(*p.Container_t, text.s, x.i, y.i, w.i, h.i)
+  Procedure CreateText(*p.Container_t, name.s, text.s, x.i, y.i, w.i, h.i)
     Define *widget.Text_t = AllocateStructure(Text_t)
-    *widget\gadget = TextGadget(#PB_Any, x, y, w, h, text)
-    _Set(*widget, #WIDGET_TYPE_TEXT, *p, x, y, w, h)
+    _Set(*widget, #WIDGET_TYPE_TEXT, name, *p, x, y, w, h)
     _AddItem(*p, *widget)
+    *widget\gadget = TextGadget(#PB_Any, x, y, w, h, text)
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure CreateExplorer(*p.Container_t, x.i, y.i, w.i, h.i)
+  Procedure CreateExplorer(*p.Container_t, name.s, x.i, y.i, w.i, h.i)
     Define *widget.Explorer_t = AllocateStructure(Explorer_t)
     Define defaultPath.s = "/Users/malartrebenjamin/Documents/RnD/Capture2Gif"
+    _Set(*widget, #WIDGET_TYPE_TEXT, name, *p, x, y, w, h)
+    _AddItem(*p, *widget)
     *widget\gadget = ExplorerComboGadget(#PB_Any, x, y, w, h, defaultPath)
-    _Set(*widget, #WIDGET_TYPE_TEXT, *p, x, y, w, h)
-    _AddItem(*p, *widget)
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure CreateString(*p.Container_t, x.i, y.i, w.i, h.i)
+  Procedure CreateString(*p.Container_t, name.s, value.s, x.i, y.i, w.i, h.i)
     Define *widget.String_t = AllocateStructure(String_t)
-    *widget\gadget = StringGadget(#PB_Any, x, y, w, h, "")
-    _Set(*widget, #WIDGET_TYPE_STRING, *p, x, y, w, h)
+    *widget\gadget = StringGadget(#PB_Any, x, y, w, h, value)
+    _Set(*widget, #WIDGET_TYPE_STRING, name, *p, x, y, w, h)
     _AddItem(*p, *widget)
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure CreateCheck(*p.Container_t, label.s, check.b, x.i, y.i, w.i, h.i)
+  Procedure CreateCheck(*p.Container_t, name.s, label.s, check.b, x.i, y.i, w.i, h.i)
     Define *widget.Check_t = AllocateStructure(Check_t)
     *widget\check = 0;CheckBoxGadget(#PB_Any, x, y, w, h, label)
-    _Set(*widget, #WIDGET_TYPE_CHECK, *p, x, y, w, h)
+    _Set(*widget, #WIDGET_TYPE_CHECK, name, *p, x, y, w, h)
     _AddItem(*p, *widget)
     ProcedureReturn *widget
   EndProcedure
   
-  Procedure CreateList(*p.Container_t, label.s, x.i, y.i, w.i, h.i)
+  Procedure CreateList(*p.Container_t, name.s, label.s, x.i, y.i, w.i, h.i)
     Define *widget.List_t = AllocateStructure(List_t)
     *widget\gadget = ListViewGadget(#PB_Any, x, y, w, h)
-   
-
-    _Set(*widget, #WIDGET_TYPE_LIST, *p, x, y, w, h)
+    _Set(*widget, #WIDGET_TYPE_LIST, name, *p, x, y, w, h)
     _AddItem(*p, *widget)
     ProcedureReturn *widget
   EndProcedure
@@ -425,7 +433,7 @@ Module Widget
 EndModule
 
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 302
-; FirstLine = 265
-; Folding = T0--v-
+; CursorPosition = 45
+; FirstLine = 41
+; Folding = X0----
 ; EnableXP

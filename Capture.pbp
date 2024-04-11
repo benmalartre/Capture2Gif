@@ -7,20 +7,20 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2024-04-11 13:21" user="graph" host="frapcanim2244"/>
+    <lastopen date="2024-04-11 14:19" user="graph" host="frapcanim2244"/>
   </section>
   <section name="files">
     <file name="Capture.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+"/>
-      <fingerprint md5="71050a04bf4f98f4ab2ad1ae56274511"/>
+      <fingerprint md5="e7a35d1b72f634b5e182577a021f2a90"/>
     </file>
     <file name="Widget.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
-      <fingerprint md5="c224b3fd5d916511a823616600947b2f"/>
+      <fingerprint md5="c2e4b037eb9663385e87eb424280e6bb"/>
     </file>
     <file name="App.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="+"/>
-      <fingerprint md5="9f734da9a8f2d6d0e95da9ba5a2c1e73"/>
+      <fingerprint md5="e1832ae35cd07ebb5f9ec1593f015be5"/>
     </file>
     <file name="Platform.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="+"/>
