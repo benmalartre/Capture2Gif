@@ -233,19 +233,15 @@ Module Widget
   EndProcedure
   
   Procedure GetWidgetByName(Map widgets.i(), name.s)
-    Debug "Get Widget By Name "
     Define *widget.Widget_t
     ForEach widgets()  
-      Debug widgets()
       *widget = widgets()
-      Debug *widget\name
       If *widget\name = name
         ProcedureReturn *widget
       EndIf
     Next
     ProcedureReturn #Null
   EndProcedure
-  
   
   Procedure Resize(*widget.Widget_t, x.i, y.i, w.i, h.i)
     Define oldWidth = *widget\width
@@ -433,7 +429,7 @@ Module Widget
 EndModule
 
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 45
-; FirstLine = 41
+; CursorPosition = 238
+; FirstLine = 201
 ; Folding = X0----
 ; EnableXP
