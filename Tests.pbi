@@ -13,7 +13,6 @@ Define rect.Platform::Rectangle_t
 pbWindow =  Platform::GetWindowByName("PureBasic")
 If pbWindow
   Platform::GetWindowRect(pbWindow, rect)
-  Debug "purebasic window ("+Str(pbWindow)+") rect :"+Str(rect\x) +","+Str(rect\y) +","+ Str(rect\w)+","+Str(rect\h)
   
   rect\x = 100
   rect\y = 100
@@ -21,10 +20,7 @@ If pbWindow
   rect\h = 100
   
   Define img = CreateImage(#PB_Any, rect\w * 10, rect\h * 10, 32)
-  Debug "image width : "+Str(ImageWidth(img))
-  Debug "image height : "+Str(ImageHeight(img))
 
-  
 ;   Platform::CaptureWindowImage(img, pbWindow)
   
   Define window = OpenWindow(#PB_Any, 100, 100, 800, 800, "", #PB_Window_SystemMenu|#PB_Window_SizeGadget)
@@ -60,7 +56,7 @@ If pbWindow
  CloseWindow(window)
  ResetRect(rect)
 EndIf
-; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 42
+; IDE Options = PureBasic 6.10 LTS (Windows - x64)
+; CursorPosition = 22
 ; Folding = -
 ; EnableXP

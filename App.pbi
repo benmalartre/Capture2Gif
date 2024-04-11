@@ -10,6 +10,15 @@ DeclareModule ScreenCaptureToGif
   #APP_NAME = "ScreenCaptureToGif"
   #RECTANGLE_THICKNESS = 2
   
+  Enumeration
+    #BORDER_NONE    = 0
+    #BORDER_LEFT    = 1
+    #BORDER_RIGHT   = 2
+    #BORDER_TOP     = 4
+    #BORDER_BOTTOM  = 8
+  EndEnumeration
+  
+  
   Structure App_t
     window.i
     capture.Capture::Capture_t
@@ -21,6 +30,9 @@ DeclareModule ScreenCaptureToGif
     *writer
     hWnd.i
     elapsed.q
+    hover.i
+    drag.i
+    state.i
     rect.Platform::Rectangle_t
     Map widgets.i() 
   EndStructure
@@ -43,31 +55,123 @@ Module ScreenCaptureToGif
   UseModule Capture
   UsePNGImageDecoder()
   
-
+  Procedure OnEvent(*app.App_t, canvas.i, type.i)
+    Define window = EventWindow()
+    If window = *app\window
+      
+    Else
+      Define mouseX = WindowMouseX(window)
+      Define mouseY = WindowMouseY(window)
+      
+      If type = #PB_EventType_LeftButtonDown And *app\hover 
+        *app\drag = *app\hover
+        *app\state + 1
+      ElseIf type = #PB_EventType_LeftButtonUp And *app\drag
+        *app\drag = #BORDER_NONE
+      ElseIf type = #PB_EventType_MouseMove
+        If *app\drag = #BORDER_NONE
+          *app\hover = #BORDER_NONE
+          If Abs(mouseX - *app\rect\x) < 5
+            *app\hover | #BORDER_LEFT
+          ElseIf Abs(mouseX - (*app\rect\x + *app\rect\w)) < 5
+            SetGadgetAttribute(canvas, #PB_Canvas_Cursor, #PB_Cursor_LeftRight)
+            *app\hover | #BORDER_RIGHT
+          EndIf
+          
+          If Abs(mouseY - *app\rect\y) < 5
+            SetGadgetAttribute(canvas, #PB_Canvas_Cursor, #PB_Cursor_UpDown)
+            *app\hover | #BORDER_TOP
+          ElseIf Abs(mouseY - (*app\rect\y + *app\rect\h)) < 5
+            *app\hover | #BORDER_BOTTOM
+            SetGadgetAttribute(canvas, #PB_Canvas_Cursor, #PB_Cursor_UpDown)
+          EndIf
+  
+          If (*app\hover & #BORDER_LEFT And *app\hover & #BORDER_TOP) Or 
+             (*app\hover & #BORDER_BOTTOM And *app\hover & #BORDER_RIGHT)
+            SetGadgetAttribute(canvas, #PB_Canvas_Cursor, #PB_Cursor_LeftUpRightDown)
+          ElseIf (*app\hover & #BORDER_RIGHT And *app\hover & #BORDER_TOP) Or 
+             (*app\hover & #BORDER_BOTTOM And *app\hover & #BORDER_LEFT)
+            SetGadgetAttribute(canvas, #PB_Canvas_Cursor, #PB_Cursor_LeftDownRightUp)
+          ElseIf (*app\hover & #BORDER_LEFT) Or (*app\hover & #BORDER_RIGHT)
+            SetGadgetAttribute(canvas, #PB_Canvas_Cursor, #PB_Cursor_LeftRight)
+          ElseIf (*app\hover & #BORDER_TOP) Or (*app\hover & #BORDER_BOTTOM)
+            SetGadgetAttribute(canvas, #PB_Canvas_Cursor, #PB_Cursor_UpDown)
+          Else
+            SetGadgetAttribute(canvas, #PB_Canvas_Cursor, #PB_Cursor_Default)
+          EndIf
+        
+        Else
+          If *app\hover & #BORDER_LEFT And *app\hover & #BORDER_TOP
+            *app\rect\w = (*app\rect\x + *app\rect\w) - mouseX
+            *app\rect\h = (*app\rect\y + *app\rect\h) - mouseY
+            *app\rect\x = mouseX
+            *app\rect\y = mouseY
+            
+          ElseIf *app\hover & #BORDER_BOTTOM And *app\hover & #BORDER_RIGHT
+            *app\rect\w = mouseX - *app\rect\x
+            *app\rect\h = mouseY - *app\rect\y
+            
+          ElseIf *app\hover & #BORDER_RIGHT And *app\hover & #BORDER_TOP 
+            *app\rect\w = mouseX - *app\rect\x
+            *app\rect\h = (*app\rect\y + *app\rect\h) - mouseY
+            *app\rect\y = mouseY
+            
+          ElseIf *app\hover & #BORDER_BOTTOM And *app\hover & #BORDER_LEFT
+            *app\rect\w = (*app\rect\x + *app\rect\w) - mouseX
+            *app\rect\h = mouseY - *app\rect\y
+            *app\rect\x = mouseX
+            
+          ElseIf *app\hover & #BORDER_LEFT
+            *app\rect\w = (*app\rect\x + *app\rect\w) - mouseX
+            *app\rect\x = mouseX
+            
+          ElseIf *app\hover & #BORDER_RIGHT
+            *app\rect\w = mouseX - *app\rect\x
+            
+          ElseIf *app\hover & #BORDER_TOP
+            *app\rect\h = (*app\rect\y + *app\rect\h) - mouseY
+            *app\rect\y = mouseY
+            
+          ElseIf *app\hover & #BORDER_BOTTOM
+            *app\rect\h = mouseY - *app\rect\y
+            
+          EndIf
+        EndIf
+      EndIf
+    EndIf
+  EndProcedure
+  
+  Procedure ResizeRectangle(*app.App_t)
+    
+  EndProcedure
+  
   Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
     ExamineDesktops()
     
-    ; first capture desktop framebuffer
-    Define background.Capture_t
     Define rect.Platform::Rectangle_t
     rect\x = DesktopX(0)
     rect\y = DesktopY(0)
     rect\w = DesktopWidth(0)
     rect\h = DesktopHeight(0)
     
-    Capture::Init(background, rect)
-    Capture::Frame(background, #False)
+    *app\rect\x = 100
+    *app\rect\y = 100
+    *app\rect\w = rect\w - 200
+    *app\rect\h = rect\h - 200
     
     ; then open a fullscreen window
     Define color = RGB(0,255,0)
-    Define flags = #PB_Window_Maximize|#PB_Window_BorderLess|#PB_Window_NoActivate
-    Define window = OpenWindow(#PB_Any, rect\x, rect\y, rect\w, rect\h, "", flags)    
+    Define flags = #PB_Window_BorderLess
+    Define window = OpenWindow(#PB_Any, rect\x, rect\y, rect\w, rect\h, "", flags, WindowID(*app\window))    
     SetWindowColor(window, color)
     Platform::SetWindowTransparentColor(window, color)
     
     Define canvas = CanvasGadget(#PB_Any, 0, 0, rect\w, rect\h, #PB_Canvas_Keyboard)
     
     Platform::EnterWindowFullscreen(window)
+    
+    Define width = WindowWidth(window, #PB_Window_InnerCoordinate)
+    Define height = WindowHeight(window, #PB_Window_InnerCoordinate)
     
     Define startX.i, startY.i, endX.i, endY.i
     Define state.i = 0
@@ -77,38 +181,27 @@ Module ScreenCaptureToGif
       event = WaitWindowEvent()
       If EventWindow() <> window : Continue : EndIf
       
-      eventType = EventType()      
-      
-      If state : endX = DesktopMouseX() : endY = DesktopMouseY() 
-      Else : startX = DesktopMouseX() : startY = DesktopMouseY() : EndIf
-    
-    StartVectorDrawing(CanvasVectorOutput(canvas))
-    AddPathBox(0,0,rect\w, rect\h)
-    VectorSourceColor(RGBA(0, 255, 0, 255))
-    FillPath()
-    
-    AddPathBox(100,100,100, 100)
-    VectorSourceColor(RGBA(255, 255, 0, 255))
-    FillPath()
-    
-    AddPathBox(200,300,50, 200)
-    VectorSourceColor(RGBA(255, 100, 120, 255))
-    FillPath()
-;       DrawVectorImage(ImageID(background\img))
-      If state
-        MovePathCursor(startX, startY)
-        AddPathLine(endX, startY)
-        AddPathLine(endX, endY)
-        AddPathLine(startX, endY)
-        ClosePath()
-        
-        VectorSourceColor(color)
-        StrokePath(8)
-       
-      Else
-;         Box(startX - 12, startY -#RECTANGLE_THICKNESS * 0.5, 24, #RECTANGLE_THICKNESS, color)
-;         Box(startX - #RECTANGLE_THICKNESS * 0.5, startY - 12, #RECTANGLE_THICKNESS, 24, color)
+      If EventGadget() = canvas
+        eventType = EventType()      
+        OnEvent(*app, window, canvas, eventType)
       EndIf
+      
+      StartVectorDrawing(CanvasVectorOutput(canvas))
+
+      AddPathBox(0,0,width, height)
+      VectorSourceColor(RGBA(0, 255, 0, 255))
+      FillPath()
+      
+      MovePathCursor(*app\rect\x,*app\rect\y)
+      AddPathLine(*app\rect\x + *app\rect\w, *app\rect\y)
+      AddPathLine(*app\rect\x + *app\rect\w, *app\rect\y + *app\rect\h)
+      AddPathLine(*app\rect\x, *app\rect\y + *app\rect\h)
+      ClosePath()
+      VectorSourceColor(RGBA(255, 255, 0, 255))
+  
+      StrokePath(5)
+      ; DrawVectorImage(ImageID(background\img))
+      
       StopVectorDrawing()
       
       If eventType = #PB_EventType_LeftButtonDown
@@ -117,9 +210,9 @@ Module ScreenCaptureToGif
         state + 1
       EndIf
     
-    Until state = 2
+    ForEver
     
-    Capture::Term(background)
+;     Capture::Term(background)
     
     If endX < startX : Swap startX, endX : EndIf
     If endY < startY : Swap startY, endY : EndIf
@@ -331,7 +424,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 65
-; FirstLine = 51
-; Folding = --
+; CursorPosition = 167
+; FirstLine = 146
+; Folding = ---
 ; EnableXP
