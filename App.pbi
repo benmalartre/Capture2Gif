@@ -31,7 +31,7 @@ DeclareModule ScreenCaptureToGif
     capture.Capture::Capture_t    ; screen capture recorder
     outputFolder.s                ; output folder
     outputFilename.s              ; output filename
-    delay.i                       ; delay between each screen shot
+    delay.f                       ; delay between each screen shot
     record.b                      ; is currently recording
     close.b                       ; close window flag
     *ui.Widget::Container_t       ; ui root container widget
@@ -314,7 +314,8 @@ Module ScreenCaptureToGif
   
   Procedure Launch()
     Define app.App_t
-    app\delay = 2
+    app\delay = 0.5
+    
     app\elapsed = 0
     app\record = #False
     app\close = #False
@@ -427,7 +428,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 307
-; FirstLine = 274
+; CursorPosition = 33
+; FirstLine = 9
 ; Folding = ---
 ; EnableXP

@@ -10,6 +10,7 @@ DeclareModule Capture
     img.i
     *writer                    ; gif writer
     delay.i                    ; gif frame duration
+    *buffer
   EndStructure
   
   DataSection
@@ -44,9 +45,10 @@ Module Capture
   Procedure _FlipBuffer(*c.Capture_t)
     Define size = *c\rect\w * *c\rect\h * 4
     Define *copy = AllocateMemory(size)
-    Define *buffer = DrawingBuffer()
+    Define *buffer = *c\buffer
     CopyMemory(*buffer, *copy, size)
     Define numPixelsInRow.i = *c\rect\w
+    
     Define numRows.i = *c\rect\h
     Define *mask = Capture::?swap_red_blue_mask
     
@@ -55,10 +57,10 @@ Module Capture
       ! mov rdi, [p.p_buffer]               ; drawing buffer to rdi register
       ! mov eax, [p.v_numPixelsInRow]       ; image width in rax register
       ! mov ecx, [p.v_numRows]              ; image height in rcx register
-      ! mov r10, [p.p_mask]                 ; load mask in r10 register
+      ! mov r11, [p.p_mask]                 ; load mask in r10 register
       ! mov r15, rax                        ; num pixels in a row
       ! imul r15, 4                         ; size of a row of pixels
-      ! movups xmm1, [r10]                  ; load mask in xmm1 register
+      ! movups xmm1, [r11]                  ; load mask in xmm1 register
       
       ! loop_over_rows:
       !   mov r11, rax                      ; reset pixels counter
@@ -85,7 +87,13 @@ Module Capture
       Define row.i
       Define rowSize = numPixelsInRow * 4
       For row = 0 To numRows - 1
-        CopyMemory(*copy + row * rowSize, *buffer + (numRows - row)* rowSize, rowSize)
+        For pixel = 0 To numPixelsInRow -1
+          PokeB(*buffer + (numRows - 1-row)* rowSize + pixel * 4 + 2, PeekB(*copy + row * rowSize + pixel * 4 + 0))
+          PokeB(*buffer + (numRows - 1-row)* rowSize + pixel * 4 + 1, PeekB(*copy + row * rowSize + pixel * 4 + 1))
+          PokeB(*buffer + (numRows - 1-row)* rowSize + pixel * 4 + 0, PeekB(*copy + row * rowSize + pixel * 4 + 2))
+          PokeB(*buffer + (numRows - 1-row)* rowSize + pixel * 4 + 3, PeekB(*copy + row * rowSize + pixel * 4 + 3))
+        Next
+        
       Next
     CompilerEndIf
   
@@ -104,9 +112,10 @@ Module Capture
     Define i
     If *c\rect\w > 0 And *c\rect\h > 0
       *c\img = CreateImage(#PB_Any, *c\rect\w, *c\rect\h, 32)
+      *c\buffer = AllocateMemory(*c\rect\w * *c\rect\h * 4 + 16)
     EndIf
     
-    *c\delay = 10
+    *c\delay = 12
     *c\writer = Capture::AnimatedGif_Init( filename, *c\rect\w, *c\rect\h, *c\delay)
   EndProcedure
   
@@ -118,23 +127,25 @@ Module Capture
       Platform::CaptureDesktopImage(dstDC, *c\rect)
     EndIf
     
+    CopyMemory(DrawingBuffer(), *c\buffer, *c\rect\w * *c\rect\h * 4)
+    StopDrawing()
     If flipBuffer : _FlipBuffer(*c) : EndIf
     
-    AnimatedGif_AddFrame(*c\writer, DrawingBuffer())
-    StopDrawing()
+    AnimatedGif_AddFrame(*c\writer, *c\buffer)
     
-
   EndProcedure
   
   Procedure Term(*c.Capture_t)
     AnimatedGif_Term(*c\writer)
    
     If IsImage(*c\img) : FreeImage(*c\img) : EndIf
+    If *c\buffer : FreeMemory(*c\buffer) : EndIf
+    
   EndProcedure 
 
 EndModule
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 88
-; FirstLine = 42
+; CursorPosition = 93
+; FirstLine = 86
 ; Folding = --
 ; EnableXP

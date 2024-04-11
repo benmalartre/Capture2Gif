@@ -195,7 +195,7 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   ; helper function to capture window image
   ; rect coordinates are in screen space
   ; null rect will capture the whole window
-  Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
+  Procedure CaptureWindowImage(dstDC, window.i, *rect.Rectangle_t=#Null)
     Protected cgImage, rect.NSRect
     If *rect
       cgImage = CGWindowListCreateImage(*rect\x, *rect\y, *rect\w, *rect\h, 8, window, 1)
@@ -213,18 +213,16 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     
     rect\origin\x = 0
     rect\origin\y = 0
-    rect\size\width = ImageWidth(img)
-    rect\size\height = ImageHeight(img)
+    rect\size\width = size\width
+    rect\size\height = size_height
 
-    StartDrawing(ImageOutput(img))
     CocoaMessage(0, nsImage, "drawInRect:@", @rect)
-    StopDrawing()
     
     CGImageRelease(nsImage)
   EndProcedure
   
   ; helper function to capture desktop image
-  Procedure CaptureDesktopImage(img.i, *buffer, *rect.Rectangle_t)
+  Procedure CaptureDesktopImage(dstDC, *rect.Rectangle_t)
     
     Define cgImage, nsImage, srcRect.NSRect, dstRect.NSRect, desktopRect.NSRect
 
@@ -248,10 +246,8 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     dstRect\size\width = *rect\w
     dstRect\size\height = *rect\h
 
-    StartDrawing(ImageOutput(img))
     CocoaMessage(0, nsImage, "drawInRect:@", @dstRect, "fromRect:@", @srcRect, 
                  "operation:", #NSCompositeSourceOver, "fraction:@", @delta)
-    StopDrawing()
     
     CGImageRelease(nsImage)
     CGImageRelease(cgImage)
@@ -366,6 +362,7 @@ CompilerEndIf
 EndModule
 
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 21
+; CursorPosition = 205
+; FirstLine = 187
 ; Folding = -----
 ; EnableXP
