@@ -15,6 +15,8 @@
   Declare GetWindowById(id.i)
   Declare GetWindowByName(name.s="Softimage")
   Declare GetWindowRect(window.i, *rect.Rectangle_t)
+  Declare SetWindowTransparency(window.i, transparency.i=255)
+  Declare SetWindowTransparentColor(window, color)
   Declare EnsureCaptureAccess()
   Declare CaptureWindowImage(img.i, window.i,*rect.Rectangle_t=#Null)
   Declare CaptureDesktopImage(img.i, *rect.Rectangle_t)
@@ -159,6 +161,25 @@ Module Platform
     SetWindowState(window, #PB_Window_Maximize)
     SetWindowLong_(hWnd, #GWL_STYLE, GetWindowLong_(hWnd, #GWL_STYLE)&~#WS_CAPTION&~#WS_SIZEBOX) 
   EndProcedure
+  
+   Procedure SetWindowTransparency(window, transparency=255)
+    Protected *windowID=WindowID(Window), exStyle=GetWindowLongPtr_(*windowID, #GWL_EXSTYLE)
+    If Transparency>=0 And Transparency<=255
+     SetWindowLongPtr_(*windowID, #GWL_EXSTYLE, exStyle | #WS_EX_LAYERED)
+     SetLayeredWindowAttributes_(*windowID, 0, Transparency, #LWA_ALPHA)
+  
+     ProcedureReturn #True
+    EndIf
+  EndProcedure
+  
+  Procedure SetWindowTransparentColor(window, color)
+    Protected *windowID=WindowID(Window), exStyle=GetWindowLongPtr_(*windowID, #GWL_EXSTYLE)
+    SetWindowLongPtr_(*windowID, #GWL_EXSTYLE, exStyle | #WS_EX_LAYERED)
+    SetLayeredWindowAttributes_(*windowID, color, #Null, #LWA_COLORKEY)
+    
+    ProcedureReturn #True
+
+   EndProcedure
 
 CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   ; get window core graphic id
@@ -331,10 +352,23 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     If title : SetWindowTitle(0, title) : EndIf
     ResizeWindow(window, x, y, width, height)
   EndProcedure
+  
+   Procedure SetWindowTransparency(window.i, transparency.i=255)
+    Protected *windowID=WindowID(window), alpha.CGFloat=transparency/255.0
+    If transparency>=0 And transparency<=255
+      CocoaMessage(0, *windowID, "setOpaque:", #NO)
+      If CocoaMessage(0, *windowID, "isOpaque")=#NO
+        CocoaMessage(0, *windowID, "setAlphaValue:@", @alpha)
+        ProcedureReturn #True
+      EndIf
+    EndIf
+  EndProcedure
+  
 CompilerEndIf
 EndModule
-; IDE Options = PureBasic 6.04 LTS (Windows - x64)
-; CursorPosition = 115
-; FirstLine = 207
+
+; IDE Options = PureBasic 6.10 LTS (Windows - x64)
+; CursorPosition = 179
+; FirstLine = 161
 ; Folding = -----
 ; EnableXP

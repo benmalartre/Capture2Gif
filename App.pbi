@@ -41,6 +41,8 @@ EndDeclareModule
 ;-----------------------------------------------------------------------------------------------
 Module ScreenCaptureToGif
   UseModule Capture
+  UsePNGImageDecoder()
+  
 
   Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
     ExamineDesktops()
@@ -57,9 +59,14 @@ Module ScreenCaptureToGif
     Capture::Frame(background, #False)
     
     ; then open a fullscreen window
+    Define color = RGB(0,255,0)
     Define flags = #PB_Window_Maximize|#PB_Window_BorderLess|#PB_Window_NoActivate
     Define window = OpenWindow(#PB_Any, rect\x, rect\y, rect\w, rect\h, "", flags)    
+    SetWindowColor(window, color)
+    Platform::SetWindowTransparentColor(window, color)
+    
     Define canvas = CanvasGadget(#PB_Any, 0, 0, rect\w, rect\h, #PB_Canvas_Keyboard)
+    
     Platform::EnterWindowFullscreen(window)
     
     Define startX.i, startY.i, endX.i, endY.i
@@ -75,8 +82,19 @@ Module ScreenCaptureToGif
       If state : endX = DesktopMouseX() : endY = DesktopMouseY() 
       Else : startX = DesktopMouseX() : startY = DesktopMouseY() : EndIf
     
-      StartVectorDrawing(CanvasVectorOutput(canvas))
-      DrawVectorImage(ImageID(background\img))
+    StartVectorDrawing(CanvasVectorOutput(canvas))
+    AddPathBox(0,0,rect\w, rect\h)
+    VectorSourceColor(RGBA(0, 255, 0, 255))
+    FillPath()
+    
+    AddPathBox(100,100,100, 100)
+    VectorSourceColor(RGBA(255, 255, 0, 255))
+    FillPath()
+    
+    AddPathBox(200,300,50, 200)
+    VectorSourceColor(RGBA(255, 100, 120, 255))
+    FillPath()
+;       DrawVectorImage(ImageID(background\img))
       If state
         MovePathCursor(startX, startY)
         AddPathLine(endX, startY)
@@ -155,6 +173,20 @@ Module ScreenCaptureToGif
     
   EndProcedure
   
+  Procedure TransparentTextGadget(hwnd.i, x, y, string.s, Font.l, Color.l) ;-- Create Text without a background
+  	; TextGadget() seem's to leave holes behind everything
+  	; It is probably better practice to remove the StartDrawing(WindowOutput(hwnd)) from this procedure
+    ; and instead place it within the main loop. I do not know if keeping it within a Procedure would hinder performance.
+    Debug hwnd
+  	StartDrawing(WindowOutput(hwnd))
+  		If Font.l <> #Null
+  			DrawingFont(FontID(Font.l))
+  		EndIf
+  		DrawingMode(#PB_2DDrawing_Transparent)
+  		DrawText(x, y, string.s,Color.l)
+  	StopDrawing()
+  EndProcedure
+  
   Procedure Launch()
     Define app.App_t
     app\delay = 5
@@ -164,9 +196,9 @@ Module ScreenCaptureToGif
     app\outputFilename = _RandomString(8)
     CompilerSelect #PB_Compiler_OS
       CompilerCase #PB_OS_Windows
-        app\outputFolder = "C:/Users/graph/Documents/bmal/src/Capture2Gif/captures"
+        app\outputFolder = "C:/Users/graph/Documents/bmal/src/captures"
       CompilerCase #PB_OS_MacOS
-        app\outputFolder = "/Users/malartrebenjamin/Documents/RnD/Capture2Gif/captures"
+        app\outputFolder = "/Users/malartrebenjamin/Documents/RnD/captures"
     CompilerEndSelect
     
     app\writer = #Null
@@ -299,7 +331,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 267
-; FirstLine = 208
-; Folding = -0
+; CursorPosition = 65
+; FirstLine = 51
+; Folding = --
 ; EnableXP
