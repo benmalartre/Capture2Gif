@@ -24,7 +24,6 @@
   Declare EnterWindowFullscreen(window)
   Declare ExitWindowFullscreen(window, x.i, y.i, width.i, height.i, title.s="")
 
-  
   CompilerIf #PB_Compiler_OS = #PB_OS_MacOS    
     #NSApplicationPresentationDefault         = 0
     #NSApplicationPresentationAutoHideDock    = 1 << 0
@@ -81,14 +80,14 @@ Module Platform
     EndProcedure
     
    ; helper function to capture window image
-   Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
+    Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
+      Define dstDC = DrawingBuffer()
       Define srcDC = GetDC_(window)
-      Define dstDC = StartDrawing(ImageOutput(img))
+      
       If dstDC And srcDC
         BitBlt_(dstDC,0,0,*rect\w,*rect\h,srcDC,*rect\x,*rect\y,#SRCCOPY)
       EndIf
       ReleaseDC_(window, srcDC)
-      StopDrawing()
     EndProcedure
     
     ; helper function to capture desktop image
@@ -368,7 +367,7 @@ CompilerEndIf
 EndModule
 
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 179
-; FirstLine = 161
+; CursorPosition = 82
+; FirstLine = 51
 ; Folding = -----
 ; EnableXP

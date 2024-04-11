@@ -3,12 +3,24 @@
 ; CAPTURE MODULE DECLARATION (WINDOWS ONLY)
 ;------------------------------------------------------------------------------------------------
 DeclareModule Capture
-
+  #RING_BUFFER_SIZE = 32
+  
   Structure Capture_t
     rect.Platform::Rectangle_t
     hWnd.i
-    img.i
+    img.i[#RING_BUFFER_SIZE]   ; circular ring buffer of image
+    imgIfx.i
+    *writer                    ; gif writer
+    delay.i                    ; gif frame duration
   EndStructure
+  
+  Structure Data_t
+    flip.b
+    *capture.Capture_t
+    imgIdx.i
+    *writer
+  EndStructure
+  
   
   DataSection
     swap_red_blue_mask:
@@ -29,7 +41,7 @@ DeclareModule Capture
     AnimatedGif_AddFrame(*writer, *cs)
   EndImport
   
-  Declare Init(*c.Capture_t, *r.Platform::Rectangle_t, hWnd=#NUL)
+  Declare Init(*c.Capture_t, filename.s, *r.Platform::Rectangle_t, hWnd=#NUL)
   Declare Frame(*c.Capture_t, flipBuffer.b=#True)
   Declare Term(*c.Capture_t)
 EndDeclareModule
@@ -40,8 +52,6 @@ EndDeclareModule
 Module Capture
 
   Procedure _FlipBuffer(*c.Capture_t)
-    StartDrawing(ImageOutput(*c\img))
-    
     Define size = *c\rect\w * *c\rect\h * 4
     Define *copy = AllocateMemory(size)
     Define *buffer = DrawingBuffer()
@@ -89,12 +99,11 @@ Module Capture
       Next
       
     CompilerEndIf
-    StopDrawing()
     
     FreeMemory(*copy)
   EndProcedure
   
-  Procedure Init(*c.Capture_t, *r.Platform::Rectangle_t, hWnd=#Null)   
+  Procedure Init(*c.Capture_t, filename.s, *r.Platform::Rectangle_t, hWnd=#Null)   
     *c\hWnd =  hWnd
     If *r 
       CopyMemory(*r, *c\rect, SizeOf(Platform::Rectangle_t))
@@ -102,29 +111,44 @@ Module Capture
       Platform::GetWindowRect(hWnd, *c\rect)
     EndIf
     
+    Define i
     If *c\rect\w > 0 And *c\rect\h > 0
-      *c\img = CreateImage(#PB_Any, *c\rect\w, *c\rect\h, 32)
+      For i = 0 To #RING_BUFFER_SIZE - 1
+        *c\img[i] = CreateImage(#PB_Any, *c\rect\w, *c\rect\h, 32)
+      Next
     EndIf
+    
+    *c\writer = Capture::AnimatedGif_Init( filename, *c\rect\w, *c\rect\h, *c\delay)
+    
   EndProcedure
   
   Procedure Frame(*c.Capture_t, flipBuffer.b=#True)
     If *c\hWnd
-      Platform::CaptureWindowImage(*c\img, *c\hWnd, *c\rect)
+      StartDrawing(ImageOutput(*c\img[imgIdx]))
+      Platform::CaptureWindowImage(*c\img[imgIdx], *c\hWnd, *c\rect)
     Else
-      Platform::CaptureDesktopImage(*c\img, *c\rect)
+      StartDrawing(ImageOutput(*c\img[imgIdx]))
+      Platform::CaptureDesktopImage(*c\img[imgIdx], *c\rect)
     EndIf
     
     If flipBuffer : _FlipBuffer(*c) : EndIf
+    
+    AnimatedGif_AddFrame(*c\writer, DrawingBuffer())
+    
+    StopDrawing()
+    imgIdx + 1
+    If imgIdx >= #RING_BUFFER_SIZE : imgIdx = 0 : EndIf
   EndProcedure
   
   Procedure Term(*c.Capture_t)
-    If IsImage(*c\img) : FreeImage(*c\img) : EndIf
+    For i = 0 To #RING_BUFFER_SIZE - 1
+      If IsImage(*c\img) : FreeImage(*c\img[i]) : EndIf
+    Next
   EndProcedure 
- 
-  
+
 EndModule
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 93
-; FirstLine = 46
+; CursorPosition = 133
+; FirstLine = 90
 ; Folding = --
 ; EnableXP

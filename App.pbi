@@ -34,7 +34,6 @@ DeclareModule ScreenCaptureToGif
     delay.i                       ; delay between each screen shot
     record.b                      ; is currently recording
     close.b                       ; close window flag
-    *writer                       ; gif writer
     *ui.Widget::Container_t       ; ui root container widget
     elapsed.q                     ; elapsed time since last screen shot
     hover.i                       ; mouse hovering region border
@@ -46,14 +45,11 @@ DeclareModule ScreenCaptureToGif
   Declare InitRectangle(*app.App_t)
   Declare GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
   Declare SelectWindow(*app.App_t)
-  Declare SelectRectangle(*app.App_t)
   
   Declare OnRecord(*app.App_t)
   
   Declare Launch()
 EndDeclareModule
-
-
 
 ;-----------------------------------------------------------------------------------------------
 ; ScreenCaptureToGif Implementation
@@ -231,17 +227,12 @@ Module ScreenCaptureToGif
     If window = *app\region : _RegionEvent(*app, event) : EndIf
         
     If *app\record And *app\elapsed > *app\delay
-      SetWindowColor(*app\window, RGB(0,64,255))
+      SetWindowColor(*app\window, RGB(60,255,120))
       Capture::Frame(*app\capture, #True)
-      StartDrawing(ImageOutput(*app\capture\img))
-      AnimatedGif_AddFrame(*app\writer, DrawingBuffer())
-      StopDrawing()
       *app\elapsed = 0
     Else
-      SetWindowColor(*app\window, RGB(222,222,222))
+      SetWindowColor(*app\window, RGB(255,120,60))
     EndIf
-    
-    
   EndProcedure
   
   
@@ -251,6 +242,8 @@ Module ScreenCaptureToGif
   
   Procedure InitRectangle(*app.App_t)
     ExamineDesktops()
+    
+    StickyWindow(*app\window, #False)
     
     Define rect.Platform::Rectangle_t
     rect\x = DesktopX(0)
@@ -273,6 +266,8 @@ Module ScreenCaptureToGif
     
     Platform::EnterWindowFullscreen(*app\region)
     _DrawRegion(*app)
+    
+    StickyWindow(*app\window, #True)
   EndProcedure
   
   Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
@@ -301,23 +296,17 @@ Module ScreenCaptureToGif
       GetRectangle(*app, *app\capture\rect)
     EndIf
     
-    Capture::Init(*app\capture, *app\rect, *app\hWnd)
-    *app\writer = Capture::AnimatedGif_Init( *app\outputFolder+"/"+*app\outputFilename+".gif", 
-                                        *app\capture\rect\w, *app\capture\rect\h, *app\delay)
+    Capture::Init(*app\capture, *app\outputFolder+"/"+*app\outputFilename+".gif", 
+                  *app\rect, *app\hWnd)
+    
   EndProcedure
   
   Procedure _StopRecord(*app.App_t)
-    AnimatedGif_Term(*app\writer)
+    AnimatedGif_Term(*app\capture\writer)
     *app\record = #False
     _DrawRegion(*app)
     *app\outputFilename = _RandomString(8)
     Capture::Term(*app\capture)
-  EndProcedure
-  
-  Procedure SelectRectangle(*app.App_t)
-    StickyWindow(*app\window, #False)
-    ScreenCaptureToGif::InitRectangle(*app)
-    StickyWindow(*app\window, #True)
   EndProcedure
   
   Procedure SelectWindow(*app.App_t)
@@ -326,7 +315,7 @@ Module ScreenCaptureToGif
   
   Procedure Launch()
     Define app.App_t
-    app\delay = 5
+    app\delay = 2
     app\elapsed = 0
     app\record = #False
     app\close = #False
@@ -338,7 +327,6 @@ Module ScreenCaptureToGif
         app\outputFolder = "/Users/malartrebenjamin/Documents/RnD/captures"
     CompilerEndSelect
     
-    app\writer = #Null
     Define width = 600
     Define height = 200
     app\window = OpenWindow( #PB_Any, 
@@ -383,7 +371,7 @@ Module ScreenCaptureToGif
 ;     Define check = Widget::CreateCheck(c3, "zob", #True, 120, 10, 32, 32)
    
 
-    Widget::SetCallback(btn1, @SelectRectangle(), app)   
+    Widget::SetCallback(btn1, @InitRectangle(), app)   
     Widget::SetCallback(btn2, @SelectWindow(), app) 
     Widget::SetCallback(btn3, @OnRecord(), app)
     
@@ -440,7 +428,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 277
-; FirstLine = 257
+; CursorPosition = 329
+; FirstLine = 316
 ; Folding = ---
 ; EnableXP
