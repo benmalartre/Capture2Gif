@@ -42,7 +42,8 @@ DeclareModule ScreenCaptureToGif
     
     Map widgets.i() 
   EndStructure
-
+  
+  Declare InitRectangle(*app.App_t)
   Declare GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
   Declare SelectWindow(*app.App_t)
   Declare SelectRectangle(*app.App_t)
@@ -60,6 +61,18 @@ EndDeclareModule
 Module ScreenCaptureToGif
   UseModule Capture
   
+   Procedure.s _RandomString(len.i)
+    Define string.s
+    For i=0 To len-1
+      Select Random(2) 
+        Case 0 : string + Chr(Random(25) + 97) ; (a ---> z)
+        Case 1 : string + Chr(Random(25) + 65) ; (A ---> Z)
+        Default : string + Chr(Random(9) + 48) ; (0 ---> 9)
+      EndSelect
+    Next
+    ProcedureReturn string
+  EndProcedure
+  
   Procedure _DrawRegion(*app.App_t)
     StartVectorDrawing(CanvasVectorOutput(*app\canvas))
     
@@ -74,20 +87,22 @@ Module ScreenCaptureToGif
     AddPathLine(*app\rect\x, *app\rect\y + *app\rect\h)
     ClosePath()
     
-    Define centerX = (*app\rect\x * 2 + *app\rect\w) >> 1
-    Define centerY = (*app\rect\y * 2 + *app\rect\h) >> 1
-    Define centerL = 8
-    
-    MovePathCursor(centerX-centerL, centerY-centerL)
-    AddPathLine(centerX+centerL, centerY+centerL)
-    
-    MovePathCursor(centerX+centerL, centerY-centerL)
-    AddPathLine(centerX-centerL, centerY+centerL)
-    
-    VectorSourceColor(RGBA(255, 255, 0, 255))
+    If Not *app\record
+      Define centerX = (*app\rect\x * 2 + *app\rect\w) >> 1
+      Define centerY = (*app\rect\y * 2 + *app\rect\h) >> 1
+      Define centerL = 8
+      
+      MovePathCursor(centerX-centerL, centerY-centerL)
+      AddPathLine(centerX+centerL, centerY+centerL)
+      
+      MovePathCursor(centerX+centerL, centerY-centerL)
+      AddPathLine(centerX-centerL, centerY+centerL)
+      VectorSourceColor(RGBA(255, 255, 0, 255))
+    Else
+      VectorSourceColor(RGBA(255, 120, 180, 255))
+    EndIf
     
     StrokePath(#BORDER_THICKNESS, #PB_Path_RoundEnd|#PB_Path_RoundCorner)
-    ; DrawVectorImage(ImageID(background\img))
     
     StopVectorDrawing()  
   EndProcedure
@@ -234,7 +249,7 @@ Module ScreenCaptureToGif
     
   EndProcedure
   
-  Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
+  Procedure InitRectangle(*app.App_t)
     ExamineDesktops()
     
     Define rect.Platform::Rectangle_t
@@ -258,80 +273,54 @@ Module ScreenCaptureToGif
     
     Platform::EnterWindowFullscreen(*app\region)
     _DrawRegion(*app)
+  EndProcedure
+  
+  Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
+    Define startX = *app\rect\x
+    Define endX = startX + *app\rect\w
+    Define startY = *app\rect\y
+    Define endY = startY + *app\rect\h
     
-;     Define width = WindowWidth(*app\region, #PB_Window_InnerCoordinate)
-;     Define height = WindowHeight(*app\region, #PB_Window_InnerCoordinate)
+    If endX < startX : Swap startX, endX : EndIf
+    If endY < startY : Swap startY, endY : EndIf
     
+    *r\x = startX
+    *r\y = startY
+    *r\w = endX - startX
+    *r\h = endY - startY
+    If *r\w % 4 : *r\w + ( 4 - *r\w  % 4 ) : EndIf
+    If *r\h % 4 : *r\h + ( 4 - *r\h  % 4 ) : EndIf 
     
-;     Repeat
-;       
-; 
-;     ForEver
-;     
-; ;     Capture::Term(background)
-;     
-;     If endX < startX : Swap startX, endX : EndIf
-;     If endY < startY : Swap startY, endY : EndIf
-;     
-;     *r\x = startX
-;     *r\y = startY
-;     *r\w = endX - startX
-;     *r\h = endY - startY
-;     If *r\w % 4 : *r\w + ( 4 - *r\w  % 4 ) : EndIf
-;     If *r\h % 4 : *r\h + ( 4 - *r\h  % 4 ) : EndIf
-;     
-    SetActiveWindow(*app\region)
-;     CloseWindow(*app\region) 
   EndProcedure
   
   Procedure _StartRecord(*app.App_t)
+    *app\record = #True   
+    _DrawRegion(*app)
+    
+    If IsWindow(*app\region)
+      GetRectangle(*app, *app\capture\rect)
+    EndIf
+    
     *app\writer = Capture::AnimatedGif_Init( *app\outputFolder+"/"+*app\outputFilename+".gif", 
                                         *app\capture\rect\w, *app\capture\rect\h, *app\delay)
-    *app\record = #True     
   EndProcedure
   
   Procedure _StopRecord(*app.App_t)
     AnimatedGif_Term(*app\writer)
     *app\record = #False
-  EndProcedure
-  
-  Procedure.s _RandomString(len.i)
-    Define string.s
-    For i=0 To len-1
-      Select Random(2) 
-        Case 0  ; (a ---> z)
-          string + Chr(Random(25) + 97)
-        Case 1  ; (A ---> Z)
-          string + Chr(Random(25) + 65)
-        Default ; (0 ---> 9)
-          string + Chr(Random(9) + 48)
-      EndSelect
-    Next
-    ProcedureReturn string
+    _DrawRegion(*app)
+    *app\outputFilename = _RandomString(8)
   EndProcedure
   
   Procedure SelectRectangle(*app.App_t)
     StickyWindow(*app\window, #False)
-    ScreenCaptureToGif::GetRectangle(*app, *app\rect)
+    ScreenCaptureToGif::InitRectangle(*app)
     Capture::Init(*app\capture, *app\rect, *app\hWnd)
     StickyWindow(*app\window, #True)
   EndProcedure
   
   Procedure SelectWindow(*app.App_t)
     
-  EndProcedure
-  
-  Procedure TransparentTextGadget(hwnd.i, x, y, string.s, Font.l, Color.l) ;-- Create Text without a background
-  	; TextGadget() seem's to leave holes behind everything
-  	; It is probably better practice to remove the StartDrawing(WindowOutput(hwnd)) from this procedure
-    ; and instead place it within the main loop. I do not know if keeping it within a Procedure would hinder performance.
-  	StartDrawing(WindowOutput(hwnd))
-  		If Font.l <> #Null
-  			DrawingFont(FontID(Font.l))
-  		EndIf
-  		DrawingMode(#PB_2DDrawing_Transparent)
-  		DrawText(x, y, string.s,Color.l)
-  	StopDrawing()
   EndProcedure
   
   Procedure Launch()
@@ -450,7 +439,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 339
-; FirstLine = 324
+; CursorPosition = 304
+; FirstLine = 291
 ; Folding = ---
 ; EnableXP
