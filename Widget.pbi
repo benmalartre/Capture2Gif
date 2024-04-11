@@ -305,7 +305,7 @@ Module Widget
       Draw(*widget)    
     EndIf   
   EndProcedure
-  
+    
   Procedure SetCallback(*widget.Widget_t, cb.CallbackFn, *data)
     *widget\callback = cb
     *widget\data = *data
@@ -514,7 +514,7 @@ Module Widget
 EndModule
 
 ; IDE Options = PureBasic 6.10 beta 1 (Windows - x64)
-; CursorPosition = 193
-; FirstLine = 146
+; CursorPosition = 303
+; FirstLine = 236
 ; Folding = Dc-X4-
 ; EnableXP
