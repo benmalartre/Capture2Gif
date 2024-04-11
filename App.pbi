@@ -302,11 +302,10 @@ Module ScreenCaptureToGif
   EndProcedure
   
   Procedure _StopRecord(*app.App_t)
-    AnimatedGif_Term(*app\capture\writer)
+    Capture::Term(*app\capture)
     *app\record = #False
     _DrawRegion(*app)
     *app\outputFilename = _RandomString(8)
-    Capture::Term(*app\capture)
   EndProcedure
   
   Procedure SelectWindow(*app.App_t)
@@ -428,7 +427,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 329
-; FirstLine = 316
+; CursorPosition = 307
+; FirstLine = 274
 ; Folding = ---
 ; EnableXP

@@ -3,13 +3,11 @@
 ; CAPTURE MODULE DECLARATION (WINDOWS ONLY)
 ;------------------------------------------------------------------------------------------------
 DeclareModule Capture
-  #RING_BUFFER_SIZE = 32
   
   Structure Capture_t
     rect.Platform::Rectangle_t
     hWnd.i
-    img.i[#RING_BUFFER_SIZE]   ; circular ring buffer of image
-    imgIfx.i
+    img.i
     *writer                    ; gif writer
     delay.i                    ; gif frame duration
   EndStructure
@@ -113,22 +111,20 @@ Module Capture
     
     Define i
     If *c\rect\w > 0 And *c\rect\h > 0
-      For i = 0 To #RING_BUFFER_SIZE - 1
-        *c\img[i] = CreateImage(#PB_Any, *c\rect\w, *c\rect\h, 32)
-      Next
+      *c\img = CreateImage(#PB_Any, *c\rect\w, *c\rect\h, 32)
     EndIf
     
     *c\writer = Capture::AnimatedGif_Init( filename, *c\rect\w, *c\rect\h, *c\delay)
     
   EndProcedure
   
+  
   Procedure Frame(*c.Capture_t, flipBuffer.b=#True)
+    StartDrawing(ImageOutput(*c\img))
     If *c\hWnd
-      StartDrawing(ImageOutput(*c\img[imgIdx]))
-      Platform::CaptureWindowImage(*c\img[imgIdx], *c\hWnd, *c\rect)
+      Platform::CaptureWindowImage(*c\img, *c\hWnd, *c\rect)
     Else
-      StartDrawing(ImageOutput(*c\img[imgIdx]))
-      Platform::CaptureDesktopImage(*c\img[imgIdx], *c\rect)
+      Platform::CaptureDesktopImage(*c\img, *c\rect)
     EndIf
     
     If flipBuffer : _FlipBuffer(*c) : EndIf
@@ -136,19 +132,18 @@ Module Capture
     AnimatedGif_AddFrame(*c\writer, DrawingBuffer())
     
     StopDrawing()
-    imgIdx + 1
-    If imgIdx >= #RING_BUFFER_SIZE : imgIdx = 0 : EndIf
+
   EndProcedure
   
   Procedure Term(*c.Capture_t)
-    For i = 0 To #RING_BUFFER_SIZE - 1
-      If IsImage(*c\img) : FreeImage(*c\img[i]) : EndIf
-    Next
+    AnimatedGif_Term(*c\writer)
+   
+    If IsImage(*c\img) : FreeImage(*c\img) : EndIf
   EndProcedure 
 
 EndModule
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 133
-; FirstLine = 90
+; CursorPosition = 126
+; FirstLine = 85
 ; Folding = --
 ; EnableXP
