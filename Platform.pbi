@@ -18,7 +18,7 @@
   Declare SetWindowTransparency(window.i, transparency.i=255)
   Declare SetWindowTransparentColor(window, color)
   Declare EnsureCaptureAccess()
-  Declare CaptureWindowImage(img.i, window.i,*rect.Rectangle_t=#Null)
+  Declare CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
   Declare CaptureDesktopImage(img.i, *rect.Rectangle_t)
   
   Declare EnterWindowFullscreen(window)
@@ -80,8 +80,7 @@ Module Platform
     EndProcedure
     
    ; helper function to capture window image
-    Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
-      Define dstDC = DrawingBuffer()
+    Procedure CaptureWindowImage(dstDC, window.i, *rect.Rectangle_t=#Null)
       Define srcDC = GetDC_(window)
       
       If dstDC And srcDC
@@ -91,9 +90,9 @@ Module Platform
     EndProcedure
     
     ; helper function to capture desktop image
-   Procedure CaptureDesktopImage(img.i, *rect.Rectangle_t)
+   Procedure CaptureDesktopImage(dstDC, *rect.Rectangle_t)
      Define window = GetDesktopWindow_() 
-     CaptureWindowImage(img.i, window, *rect)
+     CaptureWindowImage(dstDC, window, *rect)
     EndProcedure
     
   ; helper function to enumerate open windows
@@ -225,7 +224,7 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   EndProcedure
   
   ; helper function to capture desktop image
-  Procedure CaptureDesktopImage(img.i, *rect.Rectangle_t)
+  Procedure CaptureDesktopImage(img.i, *buffer, *rect.Rectangle_t)
     
     Define cgImage, nsImage, srcRect.NSRect, dstRect.NSRect, desktopRect.NSRect
 
@@ -367,7 +366,6 @@ CompilerEndIf
 EndModule
 
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 82
-; FirstLine = 51
+; CursorPosition = 21
 ; Folding = -----
 ; EnableXP

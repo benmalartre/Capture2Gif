@@ -12,14 +12,6 @@ DeclareModule Capture
     delay.i                    ; gif frame duration
   EndStructure
   
-  Structure Data_t
-    flip.b
-    *capture.Capture_t
-    imgIdx.i
-    *writer
-  EndStructure
-  
-  
   DataSection
     swap_red_blue_mask:
     Data.a 2,1,0,3,6,5,4,7,10,9,8,11,14,13,12,15
@@ -95,10 +87,10 @@ Module Capture
       For row = 0 To numRows - 1
         CopyMemory(*copy + row * rowSize, *buffer + (numRows - row)* rowSize, rowSize)
       Next
-      
     CompilerEndIf
-    
+  
     FreeMemory(*copy)
+      
   EndProcedure
   
   Procedure Init(*c.Capture_t, filename.s, *r.Platform::Rectangle_t, hWnd=#Null)   
@@ -114,24 +106,23 @@ Module Capture
       *c\img = CreateImage(#PB_Any, *c\rect\w, *c\rect\h, 32)
     EndIf
     
+    *c\delay = 10
     *c\writer = Capture::AnimatedGif_Init( filename, *c\rect\w, *c\rect\h, *c\delay)
-    
   EndProcedure
   
-  
   Procedure Frame(*c.Capture_t, flipBuffer.b=#True)
-    StartDrawing(ImageOutput(*c\img))
+    Define dstDC = StartDrawing(ImageOutput(*c\img))
     If *c\hWnd
-      Platform::CaptureWindowImage(*c\img, *c\hWnd, *c\rect)
+      Platform::CaptureWindowImage(dstDC, *c\hWnd, *c\rect)
     Else
-      Platform::CaptureDesktopImage(*c\img, *c\rect)
+      Platform::CaptureDesktopImage(dstDC, *c\rect)
     EndIf
     
     If flipBuffer : _FlipBuffer(*c) : EndIf
     
     AnimatedGif_AddFrame(*c\writer, DrawingBuffer())
-    
     StopDrawing()
+    
 
   EndProcedure
   
@@ -143,7 +134,7 @@ Module Capture
 
 EndModule
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 126
-; FirstLine = 85
+; CursorPosition = 88
+; FirstLine = 42
 ; Folding = --
 ; EnableXP
