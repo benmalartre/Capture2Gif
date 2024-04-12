@@ -9,7 +9,7 @@ DeclareModule ScreenCaptureToGif
   UseModule Capture
   #APP_NAME = "ScreenCaptureToGif"
   #BORDER_THICKNESS = 4
-  
+
   Enumeration
     #BORDER_NONE    = 0
     #BORDER_LEFT    = 1
@@ -77,10 +77,12 @@ Module ScreenCaptureToGif
     VectorSourceColor(TRANSPARENT_COLOR)
     FillPath()
     
-    MovePathCursor(*app\rect\x,*app\rect\y)
-    AddPathLine(*app\rect\x + *app\rect\w, *app\rect\y)
-    AddPathLine(*app\rect\x + *app\rect\w, *app\rect\y + *app\rect\h)
-    AddPathLine(*app\rect\x, *app\rect\y + *app\rect\h)
+    Define ht = #BORDER_THICKNESS >> 1
+    
+    MovePathCursor(*app\rect\x - ht ,*app\rect\y - ht)
+    AddPathLine(*app\rect\x + *app\rect\w + ht, *app\rect\y - ht)
+    AddPathLine(*app\rect\x + *app\rect\w + ht, *app\rect\y + *app\rect\h + ht)
+    AddPathLine(*app\rect\x - ht, *app\rect\y + *app\rect\h + ht)
     ClosePath()
     
     If Not *app\record
@@ -319,7 +321,7 @@ Module ScreenCaptureToGif
   
   Procedure Launch()
     Define app.App_t
-    app\delay = 0.5
+    app\delay = 0
     
     app\elapsed = 0
     app\record = #False
@@ -433,7 +435,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 407
-; FirstLine = 378
+; CursorPosition = 11
+; FirstLine = 12
 ; Folding = ---
 ; EnableXP
