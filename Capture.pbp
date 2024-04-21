@@ -7,24 +7,28 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2024-04-11 21:20" user="graph" host="frapcanim2244"/>
+    <lastopen date="2024-04-21 12:57" user="graph" host="frapcanim2244"/>
   </section>
   <section name="files">
     <file name="Capture.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+"/>
-      <fingerprint md5="7fed5638bb130f759dae5d8abfce7691"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
+      <fingerprint md5="19336e61c85d0fa706ab833a1e1d39be"/>
     </file>
     <file name="App.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
-      <fingerprint md5="cfeb617465cddaf8468d393fa6fa764d"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="+"/>
+      <fingerprint md5="676f9a001512cddd7476bf8f8168bfdb"/>
     </file>
     <file name="Widget.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="+"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="+"/>
       <fingerprint md5="a6f5f7631df5a02aee468085bfb268a5"/>
     </file>
     <file name="Platform.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="+"/>
-      <fingerprint md5="bb0ffa3e280001e0e9fb3aec61d315a4"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="5" panelstate="+"/>
+      <fingerprint md5="0c89e2f1c1791d2ea720dbe2a116da6e"/>
+    </file>
+    <file name="Memory.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="6" panelstate="+"/>
+      <fingerprint md5="2d91ec3246f54b95502cdf08e3bb93d0"/>
     </file>
   </section>
   <section name="targets">
@@ -32,7 +36,8 @@
       <inputfile value="App.pbi"/>
       <outputfile value=""/>
       <compiler version="PureBasic 6.10 LTS (Windows - x64)"/>
-      <options xpskin="1" debug="1" optimizer="1"/>
+      <options thread="1" xpskin="1" debug="1" optimizer="1"/>
+      <purifier enable="1"/>
     </target>
   </section>
 </project>

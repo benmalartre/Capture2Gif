@@ -1,4 +1,6 @@
 ﻿XIncludeFile "Platform.pbi"
+XIncludeFile "Memory.pbi"
+
 ;------------------------------------------------------------------------------------------------
 ; CAPTURE MODULE DECLARATION (WINDOWS ONLY)
 ;------------------------------------------------------------------------------------------------
@@ -41,10 +43,9 @@ EndDeclareModule
 ; CAPTURE MODULE IMPLEMENTATION
 ;------------------------------------------------------------------------------------------------
 Module Capture
-
   Procedure _FlipBuffer(*c.Capture_t)
     Define size = *c\rect\w * *c\rect\h * 4
-    Define *copy = AllocateMemory(size)
+    Define *copy = Memory::AllocateAlignedMemory(size + Memory::#ALIGN_BITS)
     Define *buffer = *c\buffer
     CopyMemory(*buffer, *copy, size)
     Define numPixelsInRow.i = *c\rect\w
@@ -97,7 +98,7 @@ Module Capture
       Next
     CompilerEndIf
   
-    FreeMemory(*copy)
+    Memory::FreeAlignedMemory(*copy, size + Memory::#ALIGN_BITS)
       
   EndProcedure
   
@@ -112,7 +113,7 @@ Module Capture
     Define i
     If *c\rect\w > 0 And *c\rect\h > 0
       *c\img = CreateImage(#PB_Any, *c\rect\w, *c\rect\h, 32)
-      *c\buffer = AllocateMemory(*c\rect\w * *c\rect\h * 4 + 16)
+      *c\buffer = Memory::AllocateAlignedMemory(*c\rect\w * *c\rect\h * 4 + Memory::#ALIGN_BITS)
     EndIf
     
     *c\delay = 12
@@ -138,13 +139,13 @@ Module Capture
   Procedure Term(*c.Capture_t)    
     AnimatedGif_Term(*c\writer)
     If IsImage(*c\img) : FreeImage(*c\img) : EndIf
-    If *c\buffer : FreeMemory(*c\buffer) : EndIf
+    If *c\buffer : Memory::FreeAlignedMemory(*c\buffer, *c\rect\w * *c\rect\h * 4 + Memory::#ALIGN_BITS) : EndIf
     
   EndProcedure 
 
 EndModule
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 138
-; FirstLine = 84
+; CursorPosition = 100
+; FirstLine = 83
 ; Folding = --
 ; EnableXP

@@ -76,7 +76,7 @@ Module ScreenCaptureToGif
                WindowHeight(*app\region, #PB_Window_InnerCoordinate))
     VectorSourceColor(TRANSPARENT_COLOR)
     FillPath()
-    
+        
     Define ht = #BORDER_THICKNESS >> 1
     
     MovePathCursor(*app\rect\x - ht ,*app\rect\y - ht)
@@ -126,6 +126,28 @@ Module ScreenCaptureToGif
     
   EndProcedure
   
+  Procedure _ValidateAxis(*p, *s)
+    If PeekI(*s) < 0
+      PokeI(*p, (PeekI(*p) + PeekI(*s)))
+      PokeI(*s, PeekI(*s) * -1)
+    EndIf
+    
+    Select PeekI(*s) % 4
+      Case 0:
+      Case 1: PokeI(*s, PeekI(*s)+3)
+      Case 2: PokeI(*s, PeekI(*s)+2)
+      Case 3: PokeI(*s, PeekI(*s)+1)
+    EndSelect
+        
+  EndProcedure
+  
+  
+  Procedure _ValidateRectangle(*rect.Platform::Rectangle_t)
+    _ValidateAxis(@*rect\x, @*rect\w)
+    _ValidateAxis(@*rect\y, @*rect\h)
+  EndProcedure
+  
+  
   Procedure _RegionEvent(*app.App_t, event.i)
     If EventGadget() <> *app\canvas : ProcedureReturn : EndIf
     Define mouseX = WindowMouseX(*app\region)
@@ -137,6 +159,7 @@ Module ScreenCaptureToGif
       
     ElseIf type = #PB_EventType_LeftButtonUp And *app\drag
       *app\drag = #BORDER_NONE
+      _ValidateRectangle(*app\rect)
       
     ElseIf type = #PB_EventType_MouseMove
       If *app\drag = #BORDER_NONE
@@ -220,6 +243,8 @@ Module ScreenCaptureToGif
       EndIf
     EndIf
     
+
+    
     _DrawRegion(*app)
   EndProcedure
   
@@ -277,22 +302,11 @@ Module ScreenCaptureToGif
     StickyWindow(*app\window, #True)
   EndProcedure
   
-  Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
-    Define startX = *app\rect\x
-    Define endX = startX + *app\rect\w
-    Define startY = *app\rect\y
-    Define endY = startY + *app\rect\h
-    
-    If endX < startX : Swap startX, endX : EndIf
-    If endY < startY : Swap startY, endY : EndIf
-    
-    *r\x = startX
-    *r\y = startY
-    *r\w = endX - startX
-    *r\h = endY - startY
-    If *r\w % 4 : *r\w + ( 4 - *r\w  % 4 ) : EndIf
-    If *r\h % 4 : *r\h + ( 4 - *r\h  % 4 ) : EndIf 
-    
+  Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)    
+    *r\x = *app\rect\x
+    *r\y = *app\rect\y
+    *r\w = *app\rect\w
+    *r\h = *app\rect\h
   EndProcedure
   
   Procedure _StartRecord(*app.App_t)
@@ -435,7 +449,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 11
-; FirstLine = 12
+; CursorPosition = 78
+; FirstLine = 55
 ; Folding = ---
 ; EnableXP
