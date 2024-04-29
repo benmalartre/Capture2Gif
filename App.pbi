@@ -101,9 +101,9 @@ Module ScreenCaptureToGif
     EndIf
     
     StrokePath(#BORDER_THICKNESS, #PB_Path_RoundEnd|#PB_Path_RoundCorner)
-    
-    StopVectorDrawing()  
-  EndProcedure
+      
+      StopVectorDrawing()  
+    EndProcedure
   
  
 
@@ -320,6 +320,8 @@ Module ScreenCaptureToGif
     Capture::Init(*app\capture, *app\outputFolder+"/"+*app\outputFilename+".gif", 
                   *app\rect, *app\hWnd)
     
+    HideWindow(*app\region,  #True)
+    
   EndProcedure
   
   Procedure _StopRecord(*app.App_t)
@@ -327,6 +329,7 @@ Module ScreenCaptureToGif
     *app\record = #False
     _DrawRegion(*app)
     *app\outputFilename = _RandomString(8)
+    HideWindow(*app\region,  #False)
   EndProcedure
   
   Procedure SelectWindow(*app.App_t)
@@ -335,7 +338,7 @@ Module ScreenCaptureToGif
   
   Procedure Launch()
     Define app.App_t
-    app\delay = 0
+    app\delay = 50
     
     app\elapsed = 0
     app\record = #False
@@ -449,7 +452,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 78
-; FirstLine = 55
+; CursorPosition = 340
+; FirstLine = 331
 ; Folding = ---
 ; EnableXP

@@ -116,8 +116,7 @@ Module Capture
       *c\buffer = Memory::AllocateAlignedMemory(*c\rect\w * *c\rect\h * 4 + Memory::#ALIGN_BITS)
     EndIf
     
-    *c\delay = 12
-    *c\writer = Capture::AnimatedGif_Init( filename, *c\rect\w, *c\rect\h, *c\delay)
+    *c\writer = Capture::AnimatedGif_Init( filename, *c\rect\w, *c\rect\h, 1)
   EndProcedure
   
   Procedure Frame(*c.Capture_t, flipBuffer.b=#True)
@@ -145,7 +144,7 @@ Module Capture
 
 EndModule
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 100
-; FirstLine = 83
+; CursorPosition = 118
+; FirstLine = 82
 ; Folding = --
 ; EnableXP

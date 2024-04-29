@@ -7,27 +7,27 @@
   <section name="data">
     <explorer view="C:\ProgramData\PureBasic\Examples\" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2024-04-21 12:57" user="graph" host="frapcanim2244"/>
+    <lastopen date="2024-04-27 20:01" user="graph" host="frapcanim2244"/>
   </section>
   <section name="files">
     <file name="Capture.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
-      <fingerprint md5="19336e61c85d0fa706ab833a1e1d39be"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="1" panelstate="+"/>
+      <fingerprint md5="3769a6c1edc9c678b5ea62dcf4b14648"/>
     </file>
     <file name="App.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="+"/>
-      <fingerprint md5="676f9a001512cddd7476bf8f8168bfdb"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="2" panelstate="+"/>
+      <fingerprint md5="b8a7becffa4a4488363e6a8e21f82aa9"/>
     </file>
     <file name="Widget.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="+"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="3" panelstate="+"/>
       <fingerprint md5="a6f5f7631df5a02aee468085bfb268a5"/>
     </file>
     <file name="Platform.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="5" panelstate="+"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="4" panelstate="+"/>
       <fingerprint md5="0c89e2f1c1791d2ea720dbe2a116da6e"/>
     </file>
     <file name="Memory.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="6" panelstate="+"/>
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" sortindex="5" panelstate="+"/>
       <fingerprint md5="2d91ec3246f54b95502cdf08e3bb93d0"/>
     </file>
   </section>
