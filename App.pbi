@@ -367,18 +367,19 @@ Module ScreenCaptureToGif
     Platform::EnsureCaptureAccess()
     
     app\ui = Widget::CreateRoot(app\window)
-    
-    Define c0 =  Widget::CreateContainer(root, "c0", 0, 0,width, 20, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-    Define l0 = Widget::CreateText(c0, "l0", "output folder :", 0, 0, 80, 20)
-    Define path = Widget::CreateString(c0, "path", app\outputFolder, 0, 60, width-120, 20)
-    Define btn0 = Widget::CreateButton(c0, "btn0", "...", width-40, 0, 40, 20)
-    CloseGadgetList()
 
-    Define c1 =   Widget::CreateContainer(root, "c1", 0, 40,width, 140, Widget::#WIDGET_LAYOUT_VERTICAL)
-    Define btn1 = Widget::CreateButton(c1, "btn1", "Select Region", 10, 20, width-20, 32)
-    Define btn2 = Widget::CreateButton(c1, "btn2", "Select Window", 10, 60, width-20, 32)
-    Define btn3 = Widget::CreateButton(c1, "btn3", "Start Recording", 10, 100, width-20, 32)
+    Define c0 =   Widget::CreateContainer(app\ui, "c0", 0, 40,width, 140, Widget::#WIDGET_LAYOUT_VERTICAL)
+    Define btn0 = Widget::CreateButton(c0, "btn0", "Select Region", 10, 20, width-20, 32)
+    Define btn1 = Widget::CreateButton(c0, "btn1", "Select Window", 10, 60, width-20, 32)
+    Define btn2 = Widget::CreateButton(c0, "btn2", "Start Recording", 10, 100, width-20, 32)
+    CloseGadgetList()    
+    
+    Define c1 =  Widget::CreateContainer(app\ui, "c1", 0, 0,width, 20, Widget::#WIDGET_LAYOUT_HORIZONTAL)
+    Define l0 = Widget::CreateText(c1, "l1", "output folder :", 0, 0, 80, 20)
+    Define path = Widget::CreateString(c1, "path", app\outputFolder, 0, 60, width-120, 20)
+    Define btn3 = Widget::CreateButton(c1, "btn3", "...", width-40, 0, 40, 20)
     CloseGadgetList()
+     
     
 ;     Define c2 =   Widget::CreateContainer(root, 0, 120,width, 50, Widget::#WIDGET_LAYOUT_HORIZONTAL)
 ; ;     Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 0, 0, 32, 32, RGBA(20,220, 20, 255))
@@ -395,11 +396,11 @@ Module ScreenCaptureToGif
 ;     Define check = Widget::CreateCheck(c3, "zob", #True, 120, 10, 32, 32)
    
 
-    Widget::SetCallback(btn1, @InitRectangle(), app)   
-    Widget::SetCallback(btn2, @SelectWindow(), app) 
-    Widget::SetCallback(btn3, @OnRecord(), app)
+    Widget::SetCallback(btn0, @InitRectangle(), app)   
+    Widget::SetCallback(btn1, @SelectWindow(), app) 
+    Widget::SetCallback(btn2, @OnRecord(), app)
     
-    Widget::SetState(btn3, Widget::#WIDGET_STATE_TOGGLE)
+    Widget::SetState(btn2, Widget::#WIDGET_STATE_TOGGLE)
 
   
     StickyWindow(app\window, #True)
@@ -452,7 +453,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 340
-; FirstLine = 331
+; CursorPosition = 381
+; FirstLine = 359
 ; Folding = ---
 ; EnableXP

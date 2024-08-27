@@ -243,7 +243,24 @@ Module Widget
     ProcedureReturn #Null
   EndProcedure
   
+  Procedure AddItem(*p.Container_t, *widget.Widget_t)
+    AddElement(*p\items())
+    *p\items() = *widget
+  EndProcedure
+  
+  Procedure RemoveItem(*p.Container_t, *widget.Widget_t)
+    ForEach *p\items()
+      If *p\items() = *widget
+        DeleteElement(*p\items())
+        Break
+      EndIf
+    Next
+    
+  EndProcedure
+
   Procedure Resize(*widget.Widget_t, x.i, y.i, w.i, h.i)
+    Debug "Resize "+*widget\name
+    Debug "Type "+Str(*widget\type)
     Define oldWidth = *widget\width
     Define oldHeight = *widget\height
     If oldWidth = 0 : oldWIdth = w : EndIf
@@ -257,12 +274,14 @@ Module Widget
       Define numItems = ListSize(*container\items())
       ResizeGadget(*container\gadget, *widget\x, *widget\y, *widget\width, *widget\height)
       
+      Debug "Num items "+Str(numItems)
+      
       If Not numItems : ProcedureReturn : EndIf
       
       Select *container\layout
 
         Case #WIDGET_LAYOUT_VERTICAL
-          
+          Debug "vertical layout"
           Define nh
           Define ratio.f
           Define cy = 0
@@ -278,6 +297,7 @@ Module Widget
           Next
           
         Case #WIDGET_LAYOUT_HORIZONTAL
+          Debug "horizontal layout"
           Define cx = 0
           Define nw
           Define ratio.f
@@ -429,7 +449,7 @@ Module Widget
 EndModule
 
 ; IDE Options = PureBasic 6.10 LTS (Windows - x64)
-; CursorPosition = 238
-; FirstLine = 201
+; CursorPosition = 122
+; FirstLine = 107
 ; Folding = X0----
 ; EnableXP
