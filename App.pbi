@@ -1,5 +1,7 @@
 ﻿XIncludeFile "Capture.pbi"
 XIncludeFile "Widget.pbi"
+XIncludeFile "Prefs.pbi"
+
 ;-----------------------------------------------------------------------------------------------
 ;         ScreenCaptureToGif
 ;
@@ -8,11 +10,20 @@ XIncludeFile "Widget.pbi"
 DeclareModule ScreenCaptureToGif
   UseModule Capture
   #APP_NAME = "ScreenCaptureToGif"
+  
+  #RECORD_ICON = "M 28 16 L 28 16 C 28 22.6274 22.6274 28 16 28 C 9.37258 28 4 22.6274 4 16 C 4 9.37258 9.37258 4 16 4 C 22.6274 4 28 9.37258 28 16 Z"
+  #STOP_ICON = "M 4 4 L 28 4 L 28 28 L 4 28 Z"
   #RECTANGLE_THICKNESS = 2
+  
+  #PREFERENCES_FILE_NAME = "prefs.pref"
+  #DEFAULT_OUTPUT_FOLDER = "/"
+  #DEFAULT_OUTPUT_FILENAME = "capture"
+  #DEFAULT_CAPTURE_DELAY = 5
   
   Structure App_t
     window.i
     capture.Capture::Capture_t
+    prefs.Prefs::Prefs_t
     outputFolder.s
     outputFilename.s
     delay.i
@@ -21,7 +32,8 @@ DeclareModule ScreenCaptureToGif
     *writer
     hWnd.i
   EndStructure
-
+  
+  Declare BuildDefaultPrefs(*app.App_t)
   Declare GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
   Declare SelectWindow(*app.App_t)
   Declare SelectRectangle(*app.App_t)
@@ -39,7 +51,13 @@ EndDeclareModule
 ;-----------------------------------------------------------------------------------------------
 Module ScreenCaptureToGif
   UseModule Capture
-
+  
+  Procedure BuildDefaultPrefs(*app.App_t)
+    Prefs::SetString(*app\prefs, "", "outputFolder", #DEFAULT_OUTPUT_FOLDER)
+    Prefs::SetString(*app\prefs, "", "outputFilename", #DEFAULT_OUTPUT_FILENAME)
+    Prefs::SetInt(*app\prefs, "", "captureDelay", #DEFAULT_CAPTURE_DELAY)
+  EndProcedure
+  
   Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)
     ExamineDesktops()
     
@@ -160,6 +178,16 @@ Module ScreenCaptureToGif
                              #PB_Window_SystemMenu|
                              #PB_Window_SizeGadget)
     
+    If Not Prefs::Init(app\prefs, #PREFERENCES_FILE_NAME)
+      BuildDefaultPrefs(app)
+    EndIf
+    
+    Debug "output filename : " + Prefs::GetString(app\prefs, "", "outputFilename", #DEFAULT_OUTPUT_FILENAME)
+    Debug "output folder : " + Prefs::GetString(app\prefs, "", "outputFolder", #DEFAULT_OUTPUT_FOLDER)
+    
+    Prefs::SetString(app\prefs, "", "outputFolder", "/Users/malartrebenjamin/Documents/RnD/Capture2Gif")
+    Prefs::SetString(app\prefs, "", "outputFilename", "capture")
+    
     ;app\hWnd = GetWindo
     
     Platform::EnsureCaptureAccess()
@@ -172,8 +200,8 @@ Module ScreenCaptureToGif
     Define btn2 = Widget::CreateButton(c1, "Select Window", 10, 50, width-20, 32)
     
     Define c2 =   Widget::CreateContainer(root, 0, 50,width, 50, #True, Widget::#WIDGET_LAYOUT_HORIZONTAL)
-    Define ico1 = Widget::CreateIcon(c2, "M 4 4 L 28 16 L 4 28 Z", 128, 120, 32, 32, RGBA(20,220, 20, 255))
-    Define ico2 = Widget::CreateIcon(c2, "M 4 4 L 28 4 L 28 28 L 4 28 Z", 190, 120, 32, 32, RGBA(220, 60, 20, 255))
+    Define ico1 = Widget::CreateIcon(c2, #RECORD_ICON, 128, 120, 32, 32, RGBA(20,220, 20, 255))
+    Define ico2 = Widget::CreateIcon(c2, #STOP_ICON, 190, 120, 32, 32, RGBA(220, 60, 20, 255))
     
 ;     Define c3 =   Widget::CreateContainer(root, 0, 100,width, 50, #False)
 ;     Define lst  = Widget::CreateList(c3, "zob", 0,0,100,100)
@@ -249,7 +277,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 186
-; FirstLine = 188
-; Folding = v0
+; CursorPosition = 189
+; FirstLine = 150
+; Folding = f8
 ; EnableXP

@@ -12,13 +12,14 @@ CFLAGS = -DPLATFORM_DARWIN \
 	 -DOSMac_ \
 	 -DOSMacOSX_ \
 	 -DOSMac_MachO_ \
-	 -DPB_MACOS
+	 -DPB_MACOS \
 	 -O3 \
 	 -D_LANGUAGE_C_PLUS_PLUS\
 	 -mmacosx-version-min=10.9\
 	 -fPIC\
 	 -DNDEBUG\
-	 -static
+	 -static\
+	 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 
 C++FLAGS = $(CFLAGS) \
 	   -std=c++11 \
@@ -33,9 +34,6 @@ C++FLAGS = $(CFLAGS) \
 
 # iphone SDK
 #CFLAGS += -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS10.2.sdk
-
-# Apple SDK
-CFLAGS += -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
 
 LDFLAGS +=
 

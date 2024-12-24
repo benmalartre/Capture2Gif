@@ -1,6 +1,6 @@
 ﻿XIncludeFile "Platform.pbi"
 ;------------------------------------------------------------------------------------------------
-; CAPTURE MODULE DECLARATION (WINDOWS ONLY)
+; CAPTURE MODULE DECLARATION (WINDOWS & OSX)
 ;------------------------------------------------------------------------------------------------
 DeclareModule Capture
 
@@ -113,7 +113,6 @@ Module Capture
   
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 88
-; FirstLine = 69
+; CursorPosition = 2
 ; Folding = --
 ; EnableXP

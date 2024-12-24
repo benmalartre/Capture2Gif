@@ -7,24 +7,28 @@
   <section name="data">
     <explorer view="C:/ProgramData/PureBasic/Examples/" pattern="0"/>
     <log show="1"/>
-    <lastopen date="2023-12-27 14:24" user="malartrebenjamin" host="macbook-pro-de-malartre.local"/>
+    <lastopen date="2023-12-27 16:39" user="malartrebenjamin" host="macbook-pro-de-malartre.local"/>
   </section>
   <section name="files">
-    <file name="Capture.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="36a9160540e68ca518ee5ae02142a324"/>
-    </file>
-    <file name="Widget.pbi">
-      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="c3ae296a867ec6488a9d7d93e26ec3b6"/>
-    </file>
     <file name="App.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
-      <fingerprint md5="80786abde8f7976bea49b4f169ea986d"/>
+      <fingerprint md5="a9ebc7ecf7506573f2ccee6f13595876"/>
+    </file>
+    <file name="Capture.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="c6d9f2bd30e470b9e0197139db8801dc"/>
     </file>
     <file name="Platform.pbi">
       <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
       <fingerprint md5="b2ae765df788f96c76dba64b5d7ae24b"/>
+    </file>
+    <file name="Widget.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="ffd8627ac8f8ed0eeb543011295741dc"/>
+    </file>
+    <file name="Prefs.pbi">
+      <config load="0" scan="1" panel="1" warn="1" lastopen="1" panelstate="+"/>
+      <fingerprint md5="36978cbdea20d42bffe69a96238ea699"/>
     </file>
   </section>
   <section name="targets">
