@@ -1,13 +1,18 @@
 ﻿XIncludeFile "Platform.pbi"
+XIncludeFile "Memory.pbi"
+
 ;------------------------------------------------------------------------------------------------
-; CAPTURE MODULE DECLARATION (WINDOWS & OSX)
+; CAPTURE MODULE DECLARATION (WINDOWS ONLY)
 ;------------------------------------------------------------------------------------------------
 DeclareModule Capture
-
+  
   Structure Capture_t
     rect.Platform::Rectangle_t
     hWnd.i
     img.i
+    *writer                    ; gif writer
+    delay.i                    ; gif frame duration
+    *buffer
   EndStructure
   
   DataSection
@@ -29,7 +34,7 @@ DeclareModule Capture
     AnimatedGif_AddFrame(*writer, *cs)
   EndImport
   
-  Declare Init(*c.Capture_t, *r.Platform::Rectangle_t, hWnd=#NUL)
+  Declare Init(*c.Capture_t, filename.s, *r.Platform::Rectangle_t, hWnd=#NUL)
   Declare Frame(*c.Capture_t, flipBuffer.b=#True)
   Declare Term(*c.Capture_t)
 EndDeclareModule
@@ -38,25 +43,25 @@ EndDeclareModule
 ; CAPTURE MODULE IMPLEMENTATION
 ;------------------------------------------------------------------------------------------------
 Module Capture
-
   Procedure _FlipBuffer(*c.Capture_t)
-    StartDrawing(ImageOutput(*c\img))
-    
-    Define *input = DrawingBuffer()
-    Define *output = *input
+    Define size = *c\rect\w * *c\rect\h * 4
+    Define *copy = Memory::AllocateAlignedMemory(size + Memory::#ALIGN_BITS)
+    Define *buffer = *c\buffer
+    CopyMemory(*buffer, *copy, size)
     Define numPixelsInRow.i = *c\rect\w
+    
     Define numRows.i = *c\rect\h
     Define *mask = Capture::?swap_red_blue_mask
     
     CompilerIf #PB_Compiler_Backend = #PB_Backend_Asm
-      ! mov rsi, [p.p_input]                ; input buffer to rsi register
-      ! mov rdi, [p.p_output]               ; output buffer to rdi register
+      ! mov rsi, [p.p_copy]                 ; copy buffer to rsi register
+      ! mov rdi, [p.p_buffer]               ; drawing buffer to rdi register
       ! mov eax, [p.v_numPixelsInRow]       ; image width in rax register
       ! mov ecx, [p.v_numRows]              ; image height in rcx register
-      ! mov r10, [p.p_mask]                 ; load mask in r10 register
+      ! mov r11, [p.p_mask]                 ; load mask in r10 register
       ! mov r15, rax                        ; num pixels in a row
       ! imul r15, 4                         ; size of a row of pixels
-      ! movups xmm1, [r10]                  ; load mask in xmm1 register
+      ! movups xmm1, [r11]                  ; load mask in xmm1 register
       
       ! loop_over_rows:
       !   mov r11, rax                      ; reset pixels counter
@@ -78,12 +83,26 @@ Module Capture
       ! next_row:
       !   dec rcx                           ; decrement row counter
       !   jg loop_over_rows                 ; loop next row
-    
+      
+    CompilerElse
+      Define row.i
+      Define rowSize = numPixelsInRow * 4
+      For row = 0 To numRows - 1
+        For pixel = 0 To numPixelsInRow -1
+          PokeB(*buffer + (numRows - 1-row)* rowSize + pixel * 4 + 2, PeekB(*copy + row * rowSize + pixel * 4 + 0))
+          PokeB(*buffer + (numRows - 1-row)* rowSize + pixel * 4 + 1, PeekB(*copy + row * rowSize + pixel * 4 + 1))
+          PokeB(*buffer + (numRows - 1-row)* rowSize + pixel * 4 + 0, PeekB(*copy + row * rowSize + pixel * 4 + 2))
+          PokeB(*buffer + (numRows - 1-row)* rowSize + pixel * 4 + 3, PeekB(*copy + row * rowSize + pixel * 4 + 3))
+        Next
+        
+      Next
     CompilerEndIf
-    StopDrawing()
+  
+    Memory::FreeAlignedMemory(*copy, size + Memory::#ALIGN_BITS)
+      
   EndProcedure
   
-  Procedure Init(*c.Capture_t, *r.Platform::Rectangle_t, hWnd=#Null)   
+  Procedure Init(*c.Capture_t, filename.s, *r.Platform::Rectangle_t, hWnd=#Null)   
     *c\hWnd =  hWnd
     If *r 
       CopyMemory(*r, *c\rect, SizeOf(Platform::Rectangle_t))
@@ -91,28 +110,41 @@ Module Capture
       Platform::GetWindowRect(hWnd, *c\rect)
     EndIf
     
+    Define i
     If *c\rect\w > 0 And *c\rect\h > 0
       *c\img = CreateImage(#PB_Any, *c\rect\w, *c\rect\h, 32)
+      *c\buffer = Memory::AllocateAlignedMemory(*c\rect\w * *c\rect\h * 4 + Memory::#ALIGN_BITS)
     EndIf
+    
+    *c\writer = Capture::AnimatedGif_Init( filename, *c\rect\w, *c\rect\h, 1)
   EndProcedure
   
   Procedure Frame(*c.Capture_t, flipBuffer.b=#True)
+    Define dstDC = StartDrawing(ImageOutput(*c\img))
     If *c\hWnd
-      Platform::CaptureWindowImage(*c\img, *c\hWnd, *c\rect)
+      Platform::CaptureWindowImage(dstDC, *c\hWnd, *c\rect)
     Else
-      Platform::CaptureDesktopImage(*c\img, *c\rect)
+      Platform::CaptureDesktopImage(dstDC, *c\rect)
     EndIf
     
+    CopyMemory(DrawingBuffer(), *c\buffer, *c\rect\w * *c\rect\h * 4)
+    StopDrawing()
     If flipBuffer : _FlipBuffer(*c) : EndIf
+    
+    AnimatedGif_AddFrame(*c\writer, *c\buffer)
+    
   EndProcedure
   
-  Procedure Term(*c.Capture_t)
+  Procedure Term(*c.Capture_t)    
+    AnimatedGif_Term(*c\writer)
     If IsImage(*c\img) : FreeImage(*c\img) : EndIf
+    If *c\buffer : Memory::FreeAlignedMemory(*c\buffer, *c\rect\w * *c\rect\h * 4 + Memory::#ALIGN_BITS) : EndIf
+    
   EndProcedure 
- 
-  
+
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 2
+; CursorPosition = 144
+; FirstLine = 115
 ; Folding = --
 ; EnableXP

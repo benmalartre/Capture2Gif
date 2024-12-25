@@ -3,6 +3,7 @@ build/
 
 # build files
 *.o
+*.obj
 
 # macOS
 .DS_Store

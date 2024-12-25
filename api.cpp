@@ -1,9 +1,11 @@
+#include "gif.h"
 #include "api.h"
+
+
 
 AnimatedGif_Writer* AnimatedGif_Init(const char* filename, uint32_t width, uint32_t height, uint32_t delay)
 {
   AnimatedGif_Writer* writer = new AnimatedGif_Writer();
-  writer->g = new GifWriter();
   writer->filename = filename;
   writer->width = width;
   writer->height = height;
@@ -11,10 +13,10 @@ AnimatedGif_Writer* AnimatedGif_Init(const char* filename, uint32_t width, uint3
   GifBegin(writer->g, writer->filename, writer->width, writer->height, writer->delay);
   return writer;
 }
+
 void AnimatedGif_Term(AnimatedGif_Writer* writer)
 {
   GifEnd(writer->g);
-  delete writer->g;
   delete writer;
 }
 

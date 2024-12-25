@@ -15,14 +15,15 @@
   Declare GetWindowById(id.i)
   Declare GetWindowByName(name.s="Softimage")
   Declare GetWindowRect(window.i, *rect.Rectangle_t)
+  Declare SetWindowTransparency(window.i, transparency.i=255)
+  Declare SetWindowTransparentColor(window, color)
   Declare EnsureCaptureAccess()
-  Declare CaptureWindowImage(img.i, window.i,*rect.Rectangle_t=#Null)
+  Declare CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
   Declare CaptureDesktopImage(img.i, *rect.Rectangle_t)
   
   Declare EnterWindowFullscreen(window)
   Declare ExitWindowFullscreen(window, x.i, y.i, width.i, height.i, title.s="")
 
-  
   CompilerIf #PB_Compiler_OS = #PB_OS_MacOS    
     #NSApplicationPresentationDefault         = 0
     #NSApplicationPresentationAutoHideDock    = 1 << 0
@@ -79,20 +80,19 @@ Module Platform
     EndProcedure
     
    ; helper function to capture window image
-   Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
+    Procedure CaptureWindowImage(dstDC, window.i, *rect.Rectangle_t=#Null)
       Define srcDC = GetDC_(window)
-      Define dstDC = StartDrawing(ImageOutput(img))
+      
       If dstDC And srcDC
-        BitBlt_(dstDC,0,0,*rect\w,*rect\h,srcDC,*rect\x,*ect\y,#SRCCOPY)
+        BitBlt_(dstDC,0,0,*rect\w,*rect\h,srcDC,*rect\x,*rect\y,#SRCCOPY)
       EndIf
       ReleaseDC_(window, srcDC)
-      StopDrawing()
     EndProcedure
     
     ; helper function to capture desktop image
-   Procedure CaptureDesktopImage(img.i, *rect.Rectangle_t)
+   Procedure CaptureDesktopImage(dstDC, *rect.Rectangle_t)
      Define window = GetDesktopWindow_() 
-     CaptureWindowImage(img.i, window, *rect)
+     CaptureWindowImage(dstDC, window, *rect)
     EndProcedure
     
   ; helper function to enumerate open windows
@@ -108,6 +108,12 @@ Module Platform
       *window\childrens() = hWnd
       hWnd = GetWindow_(hWnd, #GW_HWNDNEXT)
     Wend
+  EndProcedure
+  
+   ; get window by id
+  ;
+  Procedure GetWindowById(id.i)
+    ProcedureReturn #Null
   EndProcedure
   
   ; try get a window by it's name
@@ -153,6 +159,25 @@ Module Platform
     SetWindowState(window, #PB_Window_Maximize)
     SetWindowLong_(hWnd, #GWL_STYLE, GetWindowLong_(hWnd, #GWL_STYLE)&~#WS_CAPTION&~#WS_SIZEBOX) 
   EndProcedure
+  
+   Procedure SetWindowTransparency(window, transparency=255)
+    Protected *windowID=WindowID(Window), exStyle=GetWindowLongPtr_(*windowID, #GWL_EXSTYLE)
+    If Transparency>=0 And Transparency<=255
+     SetWindowLongPtr_(*windowID, #GWL_EXSTYLE, exStyle | #WS_EX_LAYERED)
+     SetLayeredWindowAttributes_(*windowID, 0, Transparency, #LWA_ALPHA)
+  
+     ProcedureReturn #True
+    EndIf
+  EndProcedure
+  
+  Procedure SetWindowTransparentColor(window, color)
+    Protected *windowID=WindowID(Window), exStyle=GetWindowLongPtr_(*windowID, #GWL_EXSTYLE)
+    SetWindowLongPtr_(*windowID, #GWL_EXSTYLE, exStyle | #WS_EX_LAYERED)
+    SetLayeredWindowAttributes_(*windowID, color, #Null, #LWA_COLORKEY)
+    
+    ProcedureReturn #True
+
+   EndProcedure
 
 CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   ; get window core graphic id
@@ -170,7 +195,7 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   ; helper function to capture window image
   ; rect coordinates are in screen space
   ; null rect will capture the whole window
-  Procedure CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
+  Procedure CaptureWindowImage(dstDC, window.i, *rect.Rectangle_t=#Null)
     Protected cgImage, rect.NSRect
     If *rect
       cgImage = CGWindowListCreateImage(*rect\x, *rect\y, *rect\w, *rect\h, 8, window, 1)
@@ -188,18 +213,16 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     
     rect\origin\x = 0
     rect\origin\y = 0
-    rect\size\width = ImageWidth(img)
-    rect\size\height = ImageHeight(img)
+    rect\size\width = size\width
+    rect\size\height = size_height
 
-    StartDrawing(ImageOutput(img))
     CocoaMessage(0, nsImage, "drawInRect:@", @rect)
-    StopDrawing()
     
     CGImageRelease(nsImage)
   EndProcedure
   
   ; helper function to capture desktop image
-  Procedure CaptureDesktopImage(img.i, *rect.Rectangle_t)
+  Procedure CaptureDesktopImage(dstDC, *rect.Rectangle_t)
     
     Define cgImage, nsImage, srcRect.NSRect, dstRect.NSRect, desktopRect.NSRect
 
@@ -223,10 +246,8 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     dstRect\size\width = *rect\w
     dstRect\size\height = *rect\h
 
-    StartDrawing(ImageOutput(img))
     CocoaMessage(0, nsImage, "drawInRect:@", @dstRect, "fromRect:@", @srcRect, 
                  "operation:", #NSCompositeSourceOver, "fraction:@", @delta)
-    StopDrawing()
     
     CGImageRelease(nsImage)
     CGImageRelease(cgImage)
@@ -264,6 +285,8 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     ProcedureReturn #Null
   EndProcedure
   
+  ; get window by id
+  ;
   Procedure GetWindowById(id.i)
     Define windows = CGWindowListCreate(#CGWindowListOptionAll, 0)
     Define descriptions = CGWindowListCreateDescriptionFromArray(windows)
@@ -323,10 +346,38 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     If title : SetWindowTitle(0, title) : EndIf
     ResizeWindow(window, x, y, width, height)
   EndProcedure
+  
+   Procedure SetWindowTransparency(window.i, transparency.i=255)
+    Protected *windowID=WindowID(window), alpha.CGFloat=transparency/255.0
+    If transparency>=0 And transparency<=255
+      CocoaMessage(0, *windowID, "setOpaque:", #NO)
+      If CocoaMessage(0, *windowID, "isOpaque")=#NO
+        CocoaMessage(0, *windowID, "setAlphaValue:@", @alpha)
+        ProcedureReturn #True
+      EndIf
+    EndIf
+  EndProcedure
+  
+  Procedure SetWindowTransparentColor(window, color)
+    Protected *windowID=WindowID(window), alpha.CGFloat=0.25
+    CocoaMessage(0,*windowID,"setOpaque:",#NO)
+    CocoaMessage(0,*windowID,"setBackgroundColor:",CocoaMessage(0,0,"NSColor clearColor")) ; clearColor = transparent
+    ;CocoaMessage(0,*windowID,"setMovableByWindowBackground:",#YES)
+    CocoaMessage(0,*windowID,"setHasShadow:",#NO)
+;     CocoaMessage(0, *windowID, "setOpaque:", #NO)
+;     If CocoaMessage(0, *windowID, "isOpaque")=#NO
+;       CocoaMessage(0, *windowID,"setBackgroundColor:", CocoaMessage(0,0,"NSColor clearColor")) 
+;       ;CocoaMessage(0, *windowID, "setAlphaValue:@", @alpha)
+;       ProcedureReturn #True
+;     EndIf
+;     ProcedureReturn #False
+
+   EndProcedure
+  
 CompilerEndIf
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 145
-; FirstLine = 135
-; Folding = -----
+; CursorPosition = 365
+; FirstLine = 324
+; Folding = ------
 ; EnableXP
