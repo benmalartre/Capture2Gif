@@ -71,12 +71,7 @@ Module ScreenCaptureToGif
   
   Procedure _DrawRegion(*app.App_t)
     
-    StartDrawing(WindowOutput(*app\region))
-    Box(20, 20, 100, 100, RGB(255, 128, 15))
-    StopDrawing()
-    ProcedureReturn
-    ;StartVectorDrawing(CanvasVectorOutput(*app\canvas))
-    StartVectorDrawing(WindowVectorOutput(*app\region))
+    StartVectorDrawing(CanvasVectorOutput(*app\canvas))
     
     AddPathBox(0,0,WindowWidth(*app\region, #PB_Window_InnerCoordinate), 
                WindowHeight(*app\region, #PB_Window_InnerCoordinate))
@@ -266,7 +261,11 @@ Module ScreenCaptureToGif
         
     If *app\record And *app\elapsed > *app\delay
       SetWindowColor(*app\window, RGB(60,255,120))
+    CompilerIf #PB_Compiler_OS = #PB_OS_MacOS
+      Capture::Frame(*app\capture, #False)
+    CompilerElse
       Capture::Frame(*app\capture, #True)
+    CompilerEndIf
       *app\elapsed = 0
     Else
       SetWindowColor(*app\window, RGB(255,120,60))
@@ -281,7 +280,7 @@ Module ScreenCaptureToGif
   Procedure InitRectangle(*app.App_t)
     ExamineDesktops()
     
-    ;StickyWindow(*app\window, #False)
+    StickyWindow(*app\window, #False)
     
     Define rect.Platform::Rectangle_t
     rect\x = DesktopX(0)
@@ -295,18 +294,18 @@ Module ScreenCaptureToGif
     *app\rect\h = rect\h - 200
     
     ; then open the rectangle selection window
-    Define flags = #PB_Window_BorderLess|#PB_Window_Maximize
+    Define flags = #PB_Window_Tool|#PB_Window_BorderLess|#PB_Window_Maximize
     *app\region = OpenWindow(#PB_Any, rect\x, rect\y, rect\w, rect\h, "", flags, WindowID(*app\window))    
-    ;SetWindowColor(*app\region, color)
+    SetWindowColor(*app\region, color)
     Platform::SetWindowTransparentColor(*app\region, TRANSPARENT_COLOR)
     
-;     *app\canvas = CanvasGadget(#PB_Any, 0, 0, rect\w, rect\h, #PB_Canvas_Keyboard)
-;     SetGadgetAttribute(*app\canvas, #PB_Gadget_BackColor, TRANSPARENT_COLOR)
+    *app\canvas = CanvasGadget(#PB_Any, 0, 0, rect\w, rect\h, #PB_Canvas_Keyboard)
+    SetGadgetAttribute(*app\canvas, #PB_Gadget_BackColor, TRANSPARENT_COLOR)
     
     Platform::EnterWindowFullscreen(*app\region)
     _DrawRegion(*app)
     
-    ;StickyWindow(*app\window, #True)
+    StickyWindow(*app\window, #True)
   EndProcedure
   
   Procedure GetRectangle(*app.App_t, *r.Platform::Rectangle_t)    
@@ -460,7 +459,7 @@ EndModule
 
 ScreenCaptureToGif::Launch()
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 21
-; FirstLine = 10
-; Folding = ---
+; CursorPosition = 411
+; FirstLine = 280
+; Folding = ----
 ; EnableXP

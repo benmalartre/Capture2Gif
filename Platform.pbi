@@ -361,23 +361,17 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   Procedure SetWindowTransparentColor(window, color)
     Protected *windowID=WindowID(window), alpha.CGFloat=0.25
     CocoaMessage(0,*windowID,"setOpaque:",#NO)
-    CocoaMessage(0,*windowID,"setBackgroundColor:",CocoaMessage(0,0,"NSColor clearColor")) ; clearColor = transparent
+    CocoaMessage(0,*windowID,"setBackgroundColor:",CocoaMessage(0,0,"NSColor clearColor"))
     ;CocoaMessage(0,*windowID,"setMovableByWindowBackground:",#YES)
     CocoaMessage(0,*windowID,"setHasShadow:",#NO)
-;     CocoaMessage(0, *windowID, "setOpaque:", #NO)
-;     If CocoaMessage(0, *windowID, "isOpaque")=#NO
-;       CocoaMessage(0, *windowID,"setBackgroundColor:", CocoaMessage(0,0,"NSColor clearColor")) 
-;       ;CocoaMessage(0, *windowID, "setAlphaValue:@", @alpha)
-;       ProcedureReturn #True
-;     EndIf
-;     ProcedureReturn #False
+    CocoaMessage(0,*windowID,"setAlphaValue:@",@alpha)
 
    EndProcedure
   
 CompilerEndIf
 EndModule
 ; IDE Options = PureBasic 6.00 Beta 7 - C Backend (MacOS X - arm64)
-; CursorPosition = 365
-; FirstLine = 324
+; CursorPosition = 363
+; FirstLine = 326
 ; Folding = ------
 ; EnableXP
