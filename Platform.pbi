@@ -17,9 +17,10 @@
   Declare GetWindowRect(window.i, *rect.Rectangle_t)
   Declare SetWindowTransparency(window.i, transparency.i=255)
   Declare SetWindowTransparentColor(window, color)
-  Declare EnsureCaptureAccess()
+  Declare.b EnsureCaptureAccess()
   Declare CaptureWindowImage(img.i, window.i, *rect.Rectangle_t=#Null)
-  Declare CaptureDesktopImage(img.i, *rect.Rectangle_t)
+  Declare CaptureDesktopImage(img.i, *rect.Rectangle_t, excludeHWnd.i=0)
+  Declare DebugWriteWindowList()
   
   Declare EnterWindowFullscreen(window)
   Declare ExitWindowFullscreen(window, x.i, y.i, width.i, height.i, title.s="")
@@ -185,13 +186,15 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
     ProcedureReturn CocoaMessage(0, WindowID(window), "windowNumber")
   EndProcedure
   
-  ; request screen access for recording
-  Procedure EnsureCaptureAccess()
-    If Not CGPreflightScreenCaptureAccess()
-      CGRequestScreenCaptureAccess()       
-    EndIf 
+  ; request screen access for recording; returns #True if permission is active
+  Procedure.b EnsureCaptureAccess()
+    If CGPreflightScreenCaptureAccess()
+      ProcedureReturn #True
+    EndIf
+    CGRequestScreenCaptureAccess()
+    ProcedureReturn #False
   EndProcedure
-    
+
   ; helper function to capture window image
   ; rect coordinates are in screen space
   ; null rect will capture the whole window
@@ -222,40 +225,71 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   EndProcedure
   
   ; helper function to capture desktop image
-  Procedure CaptureDesktopImage(dstDC, *rect.Rectangle_t)
-    
-    Define cgImage, nsImage, srcRect.NSRect, dstRect.NSRect, desktopRect.NSRect
+  ; Uses CGWindowListCreateImage which captures the compositor output including GPU/Metal/GLFW windows.
+  ; Pass excludeHWnd = CGWindowID of the control bar to omit it from the capture.
+  Procedure CaptureDesktopImage(dstDC, *rect.Rectangle_t, excludeHWnd.i=0)
+    Define cgImage, nsImage, size.NSSize, dstRect.NSRect
 
-    ; grab full screen image
-    CocoaMessage(@desktopRect, CocoaMessage(0, 0, "NSScreen mainScreen"), "frame")
-    
-    cgImage = CGDisplayCreateImage(CGMainDisplayID())
-    nsImage = CocoaMessage(0, CocoaMessage(0, 0, "NSImage alloc"), 
-                           "initWithCGImage:", cgImage, "size:@", @desktopRect\size)
-    
-    ; extract rectangle region
-    Protected delta.CGFloat = 1.0 
-    
-    srcRect\origin\x = *rect\x
-    srcRect\origin\y = desktopRect\size\height - (*rect\y + *rect\h)
-    srcRect\size\width = *rect\w
-    srcRect\size\height = *rect\h
-    
-    dstRect\origin\x = 0
-    dstRect\origin\y = 0
-    dstRect\size\width = *rect\w
+    If excludeHWnd > 0
+      ; Capture all windows below (behind) the control bar — excludes our own bar and any system overlays above it
+      cgImage = CGWindowListCreateImage(*rect\x, *rect\y, *rect\w, *rect\h,
+                                        #CGWindowListOptionOnScreenBelowWindow, excludeHWnd,
+                                        #CGWindowImageBoundsIgnoreFraming)
+    Else
+      cgImage = CGWindowListCreateImage(*rect\x, *rect\y, *rect\w, *rect\h,
+                                        #CGWindowListOptionOnScreenOnly, 0,
+                                        #CGWindowImageBoundsIgnoreFraming)
+    EndIf
+
+    size\width  = *rect\w
+    size\height = *rect\h
+    nsImage = CocoaMessage(0, CocoaMessage(0, 0, "NSImage alloc"),
+                           "initWithCGImage:", cgImage, "size:@", @size)
+    CGImageRelease(cgImage)
+
+    dstRect\origin\x    = 0
+    dstRect\origin\y    = 0
+    dstRect\size\width  = *rect\w
     dstRect\size\height = *rect\h
 
-    CocoaMessage(0, nsImage, "drawInRect:@", @dstRect, "fromRect:@", @srcRect, 
-                 "operation:", #NSCompositeSourceOver, "fraction:@", @delta)
-    
+    CocoaMessage(0, nsImage, "drawInRect:@", @dstRect)
+
     CGImageRelease(nsImage)
-    CGImageRelease(cgImage)
   EndProcedure
   
   ; helper to get cocoa string value
   Procedure.s _PeekNSString(string)
     ProcedureReturn PeekS(CocoaMessage(0, string, "UTF8String"), -1, #PB_UTF8)
+  EndProcedure
+
+  ; write all on-screen windows to ~/Desktop/capture2gif_windows.txt for diagnostics
+  Procedure DebugWriteWindowList()
+    Define windows = CGWindowListCreate(#CGWindowListOptionOnScreenOnly, 0)
+    If Not windows : ProcedureReturn : EndIf
+    Define descs = CGWindowListCreateDescriptionFromArray(windows)
+    If Not descs : CFRelease(windows) : ProcedureReturn : EndIf
+    Define count = CFArrayGetCount(descs)
+    Define f = CreateFile(#PB_Any, GetEnvironmentVariable("HOME") + "/Desktop/capture2gif_windows.txt")
+    If f
+      WriteStringN(f, "=== Capture2Gif Window List ===", #PB_UTF8)
+      WriteStringN(f, "Permission: " + Str(CGPreflightScreenCaptureAccess()), #PB_UTF8)
+      WriteStringN(f, "Count: " + Str(count), #PB_UTF8)
+      For i = 0 To count-1
+        Define desc = CFArrayGetValueAtIndex(descs, i)
+        If Not desc : Continue : EndIf
+        Define owner = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0, "kCGWindowOwnerName", 18))
+        Define wname = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0, "kCGWindowName", 13))
+        Define wnum  = CFDictionaryGetValue(desc, CFStringCreateWithCharacters(0, "kCGWindowNumber", 15))
+        Define wid.l = 0
+        If wnum : CFNumberGetValue(wnum, 3, @wid) : EndIf
+        Define ownerStr.s = "" : If owner : ownerStr = _PeekNSString(owner) : EndIf
+        Define wnameStr.s = "" : If wname : wnameStr = _PeekNSString(wname) : EndIf
+        WriteStringN(f, Str(i) + " id=" + Str(wid) + " owner=" + ownerStr + " name=" + wnameStr, #PB_UTF8)
+      Next
+      CloseFile(f)
+    EndIf
+    CFRelease(descs)
+    CFRelease(windows)
   EndProcedure
   
   ; try get a window by it's name
@@ -359,13 +393,11 @@ CompilerElseIf #PB_Compiler_OS = #PB_OS_MacOS
   EndProcedure
   
   Procedure SetWindowTransparentColor(window, color)
-    Protected *windowID=WindowID(window), alpha.CGFloat=0.25
+    Protected *windowID=WindowID(window), alpha.CGFloat=1.0
     CocoaMessage(0,*windowID,"setOpaque:",#NO)
     CocoaMessage(0,*windowID,"setBackgroundColor:",CocoaMessage(0,0,"NSColor clearColor"))
-    ;CocoaMessage(0,*windowID,"setMovableByWindowBackground:",#YES)
     CocoaMessage(0,*windowID,"setHasShadow:",#NO)
     CocoaMessage(0,*windowID,"setAlphaValue:@",@alpha)
-
    EndProcedure
   
 CompilerEndIf
